@@ -1,0 +1,72 @@
+{
+  "mcpVersion": "2024-11-05",
+  "name": "mcp-vscode-workflow",
+  "description": "MCP integration for VS Code workflow automation",
+  "prompts": [
+    {
+      "name": "code-review",
+      "description": "Comprehensive code review with best practices",
+      "arguments": [
+        {
+          "name": "code",
+          "description": "Code to review",
+          "required": true
+        },
+        {
+          "name": "language",
+          "description": "Programming language",
+          "required": true
+        },
+        {
+          "name": "context",
+          "description": "Additional context about the code",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "documentation",
+      "description": "Generate technical documentation",
+      "arguments": [
+        {
+          "name": "code",
+          "description": "Code to document",
+          "required": true
+        },
+        {
+          "name": "language",
+          "description": "Programming language",
+          "required": true
+        },
+        {
+          "name": "style",
+          "description": "Documentation style (JSDoc, Sphinx, etc.)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "bug-analysis",
+      "description": "Analyze and debug errors",
+      "arguments": [
+        {
+          "name": "error",
+          "description": "Error message or stack trace",
+          "required": true
+        },
+        {
+          "name": "code",
+          "description": "Related code context",
+          "required": false
+        },
+        {
+          "name": "environment",
+          "description": "Runtime environment details",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "tools": [],
+  "resources": []
+}

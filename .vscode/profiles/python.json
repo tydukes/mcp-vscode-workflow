@@ -1,0 +1,16 @@
+{
+  "name": "Python Development Profile",
+  "settings": {
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "editor.formatOnSave": true
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.pylint",
+      "ms-python.black-formatter"
+    ]
+  }
+}

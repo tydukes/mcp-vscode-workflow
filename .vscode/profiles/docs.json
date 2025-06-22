@@ -1,0 +1,15 @@
+{
+  "name": "Documentation Profile",
+  "settings": {
+    "markdown.preview.fontSize": 16,
+    "markdown.preview.lineHeight": 1.6,
+    "editor.wordWrap": "on",
+    "editor.lineNumbers": "off"
+  },
+  "extensions": {
+    "recommendations": [
+      "yzhang.markdown-all-in-one",
+      "shd101wyy.markdown-preview-enhanced"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Default Profile",
+  "settings": {
+    "workbench.colorTheme": "Default Dark+",
+    "editor.fontSize": 14,
+    "editor.tabSize": 2
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.vscode-json"
+    ]
+  }
+}
