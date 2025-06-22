@@ -1,0 +1,101 @@
+{
+  "mcpVersion": "2024-11-05",
+  "name": "bash-scripting-profile",
+  "description": "MCP configuration for shell scripting and automation workflow",
+  "extends": "../roles.json#/roles/bash",
+  "prompts": [
+    {
+      "name": "script-optimization",
+      "description": "Optimize shell scripts for performance and reliability",
+      "arguments": [
+        {
+          "name": "script",
+          "description": "Shell script to optimize",
+          "required": true
+        },
+        {
+          "name": "shell",
+          "description": "Target shell (bash, zsh, sh, etc.)",
+          "required": false
+        },
+        {
+          "name": "requirements",
+          "description": "Specific optimization requirements",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "automation-design",
+      "description": "Design automation workflows and scripts",
+      "arguments": [
+        {
+          "name": "task",
+          "description": "Task to automate",
+          "required": true
+        },
+        {
+          "name": "frequency",
+          "description": "How often the task runs",
+          "required": false
+        },
+        {
+          "name": "environment",
+          "description": "Target environment details",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "system-administration",
+      "description": "System administration and maintenance scripts",
+      "arguments": [
+        {
+          "name": "operation",
+          "description": "System operation to perform",
+          "required": true
+        },
+        {
+          "name": "os",
+          "description": "Target operating system",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "shellcheck",
+      "command": "shellcheck",
+      "args": ["**/*.sh"]
+    },
+    {
+      "name": "bash-test",
+      "command": "bash",
+      "args": ["-n"]
+    },
+    {
+      "name": "script-analyzer",
+      "command": "shfmt",
+      "args": ["-d", "**/*.sh"]
+    }
+  ],
+  "servers": {
+    "filesystem": {
+      "command": "mcp-server-filesystem",
+      "args": ["--root", "."]
+    },
+    "git": {
+      "command": "mcp-server-git",
+      "args": ["--repository", "."]
+    },
+    "shell-tools": {
+      "command": "mcp-server-shell",
+      "args": ["--workspace", "."]
+    },
+    "system-monitor": {
+      "command": "mcp-server-system",
+      "args": ["--monitor", "true"]
+    }
+  }
+}

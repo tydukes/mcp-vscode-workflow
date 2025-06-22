@@ -1,0 +1,104 @@
+{
+  "mcpVersion": "2024-11-05",
+  "name": "mcp-workflow-roles",
+  "description": "Central role definitions for MCP workflow profiles",
+  "roles": {
+    "python": {
+      "name": "Python Development Assistant",
+      "description": "Specialized in Python development, testing, and deployment",
+      "promptFile": "prompts/python-specialist.md",
+      "capabilities": [
+        "code-review",
+        "testing",
+        "debugging",
+        "performance-optimization",
+        "dependency-management"
+      ],
+      "mcpServers": [
+        "filesystem",
+        "git",
+        "python-tools",
+        "testing-framework"
+      ]
+    },
+    "infra": {
+      "name": "Infrastructure & DevOps Assistant",
+      "description": "Expert in infrastructure automation, cloud services, and DevOps practices",
+      "promptFile": "prompts/infra-specialist.md",
+      "capabilities": [
+        "infrastructure-review",
+        "security-analysis",
+        "deployment-optimization",
+        "monitoring-setup"
+      ],
+      "mcpServers": [
+        "filesystem",
+        "git",
+        "cloud-tools",
+        "docker",
+        "kubernetes"
+      ]
+    },
+    "docs": {
+      "name": "Documentation Specialist",
+      "description": "Expert in technical writing and documentation generation",
+      "promptFile": "prompts/docs-specialist.md",
+      "capabilities": [
+        "documentation",
+        "api-documentation",
+        "user-guides",
+        "technical-writing"
+      ],
+      "mcpServers": [
+        "filesystem",
+        "git",
+        "markdown-tools",
+        "documentation-generator"
+      ]
+    },
+    "bash": {
+      "name": "Shell Scripting Expert",
+      "description": "Specialized in shell scripting, automation, and system administration",
+      "promptFile": "prompts/bash-specialist.md",
+      "capabilities": [
+        "script-optimization",
+        "automation",
+        "system-administration",
+        "process-management"
+      ],
+      "mcpServers": [
+        "filesystem",
+        "git",
+        "shell-tools",
+        "system-monitor"
+      ]
+    },
+    "cicd": {
+      "name": "CI/CD Pipeline Expert",
+      "description": "Expert in continuous integration and deployment workflows",
+      "promptFile": "prompts/cicd-specialist.md",
+      "capabilities": [
+        "pipeline-optimization",
+        "deployment-automation",
+        "workflow-design",
+        "quality-gates"
+      ],
+      "mcpServers": [
+        "filesystem",
+        "git",
+        "github-actions",
+        "docker",
+        "testing-framework"
+      ]
+    }
+  },
+  "commonPrompts": [
+    "code-review",
+    "documentation",
+    "bug-analysis"
+  ],
+  "commonMcpServers": [
+    "filesystem",
+    "git"
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "mcpVersion": "2024-11-05",
+  "name": "documentation-profile",
+  "description": "MCP configuration for documentation and technical writing workflow",
+  "extends": "../roles.json#/roles/docs",
+  "prompts": [
+    {
+      "name": "api-documentation",
+      "description": "Generate API documentation from code",
+      "arguments": [
+        {
+          "name": "code",
+          "description": "API code or schema to document",
+          "required": true
+        },
+        {
+          "name": "format",
+          "description": "Documentation format (OpenAPI, JSDoc, etc.)",
+          "required": false
+        },
+        {
+          "name": "audience",
+          "description": "Target audience (developers, end-users, etc.)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "user-guide",
+      "description": "Create user guides and tutorials",
+      "arguments": [
+        {
+          "name": "feature",
+          "description": "Feature or process to document",
+          "required": true
+        },
+        {
+          "name": "user_level",
+          "description": "User experience level (beginner, intermediate, advanced)",
+          "required": false
+        },
+        {
+          "name": "format",
+          "description": "Guide format (markdown, confluence, etc.)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "technical-writing",
+      "description": "Improve technical writing and documentation quality",
+      "arguments": [
+        {
+          "name": "content",
+          "description": "Content to improve",
+          "required": true
+        },
+        {
+          "name": "style_guide",
+          "description": "Style guide to follow",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "markdown-lint",
+      "command": "markdownlint",
+      "args": ["**/*.md"]
+    },
+    {
+      "name": "spell-check",
+      "command": "cspell",
+      "args": ["**/*.md"]
+    },
+    {
+      "name": "link-check",
+      "command": "markdown-link-check",
+      "args": ["**/*.md"]
+    }
+  ],
+  "servers": {
+    "filesystem": {
+      "command": "mcp-server-filesystem",
+      "args": ["--root", "."]
+    },
+    "git": {
+      "command": "mcp-server-git",
+      "args": ["--repository", "."]
+    },
+    "markdown-tools": {
+      "command": "mcp-server-markdown",
+      "args": ["--workspace", "."]
+    },
+    "documentation-generator": {
+      "command": "mcp-server-docs",
+      "args": ["--source", ".", "--output", "docs/"]
+    }
+  }
+}
