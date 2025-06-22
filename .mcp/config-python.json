@@ -1,0 +1,96 @@
+{
+  "mcpVersion": "2024-11-05",
+  "name": "python-development-profile",
+  "description": "MCP configuration for Python development workflow",
+  "extends": "../roles.json#/roles/python",
+  "prompts": [
+    {
+      "name": "python-code-review",
+      "description": "Python-specific code review with PEP 8 compliance",
+      "arguments": [
+        {
+          "name": "code",
+          "description": "Python code to review",
+          "required": true
+        },
+        {
+          "name": "framework",
+          "description": "Python framework (Django, Flask, FastAPI, etc.)",
+          "required": false
+        },
+        {
+          "name": "version",
+          "description": "Python version target",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "python-testing",
+      "description": "Generate unit tests for Python code",
+      "arguments": [
+        {
+          "name": "code",
+          "description": "Python code to test",
+          "required": true
+        },
+        {
+          "name": "framework",
+          "description": "Testing framework (pytest, unittest, etc.)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "python-debugging",
+      "description": "Debug Python errors and exceptions",
+      "arguments": [
+        {
+          "name": "error",
+          "description": "Error message or traceback",
+          "required": true
+        },
+        {
+          "name": "code",
+          "description": "Relevant code context",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "python-linter",
+      "command": "python",
+      "args": ["-m", "flake8"]
+    },
+    {
+      "name": "python-formatter",
+      "command": "python",
+      "args": ["-m", "black"]
+    },
+    {
+      "name": "python-test-runner",
+      "command": "python",
+      "args": ["-m", "pytest"]
+    }
+  ],
+  "servers": {
+    "filesystem": {
+      "command": "mcp-server-filesystem",
+      "args": ["--root", "."]
+    },
+    "git": {
+      "command": "mcp-server-git",
+      "args": ["--repository", "."]
+    },
+    "python-tools": {
+      "command": "mcp-server-python",
+      "args": ["--workspace", "."]
+    },
+    "testing-framework": {
+      "command": "mcp-server-testing",
+      "args": ["--framework", "pytest"]
+    }
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "mcpVersion": "2024-11-05",
+  "name": "infrastructure-profile",
+  "description": "MCP configuration for infrastructure and DevOps workflow",
+  "extends": "../roles.json#/roles/infra",
+  "prompts": [
+    {
+      "name": "infrastructure-review",
+      "description": "Review infrastructure code and configurations",
+      "arguments": [
+        {
+          "name": "code",
+          "description": "Infrastructure code (Terraform, CloudFormation, etc.)",
+          "required": true
+        },
+        {
+          "name": "platform",
+          "description": "Cloud platform (AWS, Azure, GCP, etc.)",
+          "required": false
+        },
+        {
+          "name": "environment",
+          "description": "Target environment (dev, staging, prod)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "security-analysis",
+      "description": "Analyze infrastructure for security vulnerabilities",
+      "arguments": [
+        {
+          "name": "configuration",
+          "description": "Infrastructure configuration to analyze",
+          "required": true
+        },
+        {
+          "name": "compliance",
+          "description": "Compliance framework (SOC2, HIPAA, etc.)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "deployment-optimization",
+      "description": "Optimize deployment strategies and processes",
+      "arguments": [
+        {
+          "name": "current_deployment",
+          "description": "Current deployment configuration",
+          "required": true
+        },
+        {
+          "name": "requirements",
+          "description": "Performance and availability requirements",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "terraform-validate",
+      "command": "terraform",
+      "args": ["validate"]
+    },
+    {
+      "name": "terraform-plan",
+      "command": "terraform",
+      "args": ["plan"]
+    },
+    {
+      "name": "docker-build",
+      "command": "docker",
+      "args": ["build", "."]
+    }
+  ],
+  "servers": {
+    "filesystem": {
+      "command": "mcp-server-filesystem",
+      "args": ["--root", "."]
+    },
+    "git": {
+      "command": "mcp-server-git",
+      "args": ["--repository", "."]
+    },
+    "cloud-tools": {
+      "command": "mcp-server-cloud",
+      "args": ["--provider", "multi"]
+    },
+    "docker": {
+      "command": "mcp-server-docker",
+      "args": ["--socket", "/var/run/docker.sock"]
+    },
+    "kubernetes": {
+      "command": "mcp-server-kubernetes",
+      "args": ["--kubeconfig", "~/.kube/config"]
+    }
+  }
+}

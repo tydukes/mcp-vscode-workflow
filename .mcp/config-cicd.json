@@ -1,0 +1,126 @@
+{
+  "mcpVersion": "2024-11-05",
+  "name": "cicd-pipeline-profile",
+  "description": "MCP configuration for CI/CD pipeline development and optimization",
+  "extends": "../roles.json#/roles/cicd",
+  "prompts": [
+    {
+      "name": "pipeline-optimization",
+      "description": "Optimize CI/CD pipeline performance and reliability",
+      "arguments": [
+        {
+          "name": "pipeline",
+          "description": "Pipeline configuration to optimize",
+          "required": true
+        },
+        {
+          "name": "platform",
+          "description": "CI/CD platform (GitHub Actions, GitLab CI, etc.)",
+          "required": false
+        },
+        {
+          "name": "goals",
+          "description": "Optimization goals (speed, reliability, cost, etc.)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "deployment-automation",
+      "description": "Design automated deployment strategies",
+      "arguments": [
+        {
+          "name": "application",
+          "description": "Application or service to deploy",
+          "required": true
+        },
+        {
+          "name": "environment",
+          "description": "Target deployment environment",
+          "required": false
+        },
+        {
+          "name": "strategy",
+          "description": "Deployment strategy (blue-green, rolling, etc.)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "workflow-design",
+      "description": "Design development workflows and branching strategies",
+      "arguments": [
+        {
+          "name": "team_size",
+          "description": "Development team size",
+          "required": false
+        },
+        {
+          "name": "release_cadence",
+          "description": "Release frequency and schedule",
+          "required": false
+        },
+        {
+          "name": "compliance",
+          "description": "Compliance requirements",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "quality-gates",
+      "description": "Design quality gates and automated checks",
+      "arguments": [
+        {
+          "name": "project_type",
+          "description": "Type of project or application",
+          "required": true
+        },
+        {
+          "name": "quality_standards",
+          "description": "Quality standards and requirements",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "github-actions-validate",
+      "command": "actionlint",
+      "args": [".github/workflows/*.yml"]
+    },
+    {
+      "name": "docker-security-scan",
+      "command": "docker",
+      "args": ["scout", "cves"]
+    },
+    {
+      "name": "pipeline-test",
+      "command": "act",
+      "args": ["-n"]
+    }
+  ],
+  "servers": {
+    "filesystem": {
+      "command": "mcp-server-filesystem",
+      "args": ["--root", "."]
+    },
+    "git": {
+      "command": "mcp-server-git",
+      "args": ["--repository", "."]
+    },
+    "github-actions": {
+      "command": "mcp-server-github-actions",
+      "args": ["--workspace", "."]
+    },
+    "docker": {
+      "command": "mcp-server-docker",
+      "args": ["--socket", "/var/run/docker.sock"]
+    },
+    "testing-framework": {
+      "command": "mcp-server-testing",
+      "args": ["--framework", "multi"]
+    }
+  }
+}
