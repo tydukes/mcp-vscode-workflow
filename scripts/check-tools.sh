@@ -215,9 +215,15 @@ check_profile_tools() {
 # Function to show usage
 show_usage() {
     cat << EOF
-Usage: $0 [PROFILE]
+Usage: $0 [OPTIONS] [PROFILE]
+       $0 --profile PROFILE
+       $0 -p PROFILE
 
 Validates presence of CLI tools required for different development profiles.
+
+OPTIONS:
+  --profile, -p PROFILE  Specify the profile to check
+  -h, --help            Show this help message
 
 PROFILES:
   bash      - Shell scripting tools (jq, shellcheck)
@@ -231,10 +237,11 @@ PROFILES:
 If no profile is specified, checks all profiles.
 
 Examples:
-  $0 python    # Check Python profile tools
-  $0 infra     # Check Infrastructure profile tools
-  $0 all       # Check all tools (overview mode)
-  $0           # Check all profiles
+  $0 python              # Check Python profile tools
+  $0 --profile bash      # Check bash profile tools
+  $0 -p infra           # Check Infrastructure profile tools
+  $0 all                # Check all tools (overview mode)
+  $0                    # Check all profiles
 
 Exit codes:
   0 - All required tools are present
@@ -245,13 +252,31 @@ EOF
 # Main function
 main() {
     # Parse command line arguments
-    local profile="${1:-}"
+    local profile=""
     
-    # Show usage if help is requested
-    if [[ "$profile" == "-h" || "$profile" == "--help" ]]; then
-        show_usage
-        exit 0
-    fi
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --profile)
+                profile="$2"
+                shift 2
+                ;;
+            -p)
+                profile="$2"
+                shift 2
+                ;;
+            -h|--help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                # If no flag is provided, treat the first argument as the profile
+                if [[ -z "$profile" ]]; then
+                    profile="$1"
+                fi
+                shift
+                ;;
+        esac
+    done
     
     # Detect operating system
     local os
