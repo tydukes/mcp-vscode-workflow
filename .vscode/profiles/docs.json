@@ -4,12 +4,96 @@
     "markdown.preview.fontSize": 16,
     "markdown.preview.lineHeight": 1.6,
     "editor.wordWrap": "on",
-    "editor.lineNumbers": "off"
+    "editor.lineNumbers": "off",
+    "files.associations": {
+      "*.md": "markdown",
+      "*.markdown": "markdown",
+      "*.mdown": "markdown",
+      "*.mkd": "markdown",
+      "*.mdx": "mdx",
+      "*.rst": "restructuredtext",
+      "*.adoc": "asciidoc",
+      "*.asciidoc": "asciidoc"
+    },
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "markdown.extension.toc.updateOnSave": true,
+    "markdown.extension.preview.autoShowPreviewToSide": true
   },
   "extensions": {
     "recommendations": [
+      "GitHub.copilot",
+      "GitHub.copilot-chat",
+      "modelcontextprotocol.mcp",
       "yzhang.markdown-all-in-one",
-      "shd101wyy.markdown-preview-enhanced"
+      "shd101wyy.markdown-preview-enhanced",
+      "davidanson.vscode-markdownlint",
+      "bierner.markdown-mermaid",
+      "mushan.vscode-paste-image",
+      "asciidoctor.asciidoctor-vscode"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Bootstrap Documentation Profile",
+        "type": "shell",
+        "command": "${workspaceFolder}/scripts/bootstrap.sh",
+        "args": ["--profile", "docs"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Generate Documentation",
+        "type": "shell",
+        "command": "find",
+        "args": [".", "-name", "*.md", "-type", "f"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Lint Markdown",
+        "type": "shell",
+        "command": "markdownlint",
+        "args": ["**/*.md"],
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      }
+    ]
+  },
+  "contextTriggers": {
+    "filePatterns": [
+      "*.md",
+      "*.markdown",
+      "*.mdown",
+      "*.mkd",
+      "*.mdx",
+      "*.rst",
+      "*.adoc",
+      "*.asciidoc"
+    ],
+    "workspaceContains": [
+      "docs/",
+      "README.md",
+      "CHANGELOG.md",
+      "CONTRIBUTING.md",
+      "*.md"
     ]
   }
 }

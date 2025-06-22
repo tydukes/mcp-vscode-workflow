@@ -1,0 +1,113 @@
+{
+  "name": "CI/CD Development Profile",
+  "settings": {
+    "files.associations": {
+      "*.yml": "yaml",
+      "*.yaml": "yaml",
+      ".github/workflows/*.yml": "github-actions",
+      ".github/workflows/*.yaml": "github-actions",
+      "azure-pipelines*.yml": "azure-pipelines",
+      ".gitlab-ci.yml": "gitlab-ci",
+      "Jenkinsfile": "groovy",
+      "*.jenkinsfile": "groovy",
+      "*.pipeline": "groovy"
+    },
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "yaml.schemas": {
+      "https://json.schemastore.org/github-workflow.json": [
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml"
+      ],
+      "https://json.schemastore.org/azure-pipelines.json": [
+        "azure-pipelines*.yml",
+        "azure-pipelines*.yaml"
+      ],
+      "https://json.schemastore.org/gitlab-ci.json": [
+        ".gitlab-ci.yml"
+      ]
+    },
+    "github-actions.workflows.pinned.workflows": [
+      ".github/workflows/"
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "GitHub.copilot",
+      "GitHub.copilot-chat",
+      "modelcontextprotocol.mcp",
+      "GitHub.vscode-github-actions",
+      "ms-azure-devops.azure-pipelines",
+      "GitLab.gitlab-workflow",
+      "redhat.vscode-yaml",
+      "ms-vscode.azure-account",
+      "jenkins-x.vscode-jx-tools",
+      "ms-kubernetes-tools.vscode-kubernetes-tools",
+      "ms-azuretools.vscode-docker"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Bootstrap CI/CD Profile",
+        "type": "shell",
+        "command": "${workspaceFolder}/scripts/bootstrap.sh",
+        "args": ["--profile", "cicd"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Validate GitHub Actions",
+        "type": "shell",
+        "command": "find",
+        "args": [".github/workflows", "-name", "*.yml", "-o", "-name", "*.yaml"],
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Check CI/CD Files",
+        "type": "shell",
+        "command": "yamllint",
+        "args": [".github/workflows/", "azure-pipelines*.yml", ".gitlab-ci.yml"],
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      }
+    ]
+  },
+  "contextTriggers": {
+    "filePatterns": [
+      ".github/workflows/*.yml",
+      ".github/workflows/*.yaml",
+      "azure-pipelines*.yml",
+      ".gitlab-ci.yml",
+      "Jenkinsfile",
+      "*.jenkinsfile",
+      "*.pipeline"
+    ],
+    "workspaceContains": [
+      ".github/workflows/",
+      "azure-pipelines.yml",
+      ".gitlab-ci.yml",
+      "Jenkinsfile",
+      ".circleci/",
+      ".buildkite/",
+      ".drone.yml"
+    ]
+  }
+}
