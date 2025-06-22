@@ -1,0 +1,100 @@
+{
+  "name": "Infrastructure Development Profile",
+  "settings": {
+    "files.associations": {
+      "*.tf": "terraform",
+      "*.tfvars": "terraform",
+      "*.yml": "yaml",
+      "*.yaml": "yaml",
+      "Dockerfile": "dockerfile",
+      "docker-compose*.yml": "dockercompose",
+      "*.hcl": "hcl"
+    },
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "yaml.schemas": {
+      "https://raw.githubusercontent.com/docker/compose/master/compose/config/config_schema_v3.8.json": [
+        "docker-compose*.yml",
+        "docker-compose*.yaml"
+      ]
+    },
+    "terraform.experimentalFeatures.validateOnSave": true,
+    "terraform.experimentalFeatures.prefillRequiredFields": true
+  },
+  "extensions": {
+    "recommendations": [
+      "GitHub.copilot",
+      "GitHub.copilot-chat",
+      "modelcontextprotocol.mcp",
+      "HashiCorp.terraform",
+      "ms-azuretools.vscode-docker",
+      "redhat.vscode-yaml",
+      "ms-kubernetes-tools.vscode-kubernetes-tools",
+      "amazonwebservices.aws-toolkit-vscode",
+      "ms-azuretools.vscode-azureresourcegroups"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Bootstrap Infrastructure Profile",
+        "type": "shell",
+        "command": "${workspaceFolder}/scripts/bootstrap.sh",
+        "args": ["--profile", "infra"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Terraform Init",
+        "type": "shell",
+        "command": "terraform",
+        "args": ["init"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Terraform Plan",
+        "type": "shell",
+        "command": "terraform",
+        "args": ["plan"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      }
+    ]
+  },
+  "contextTriggers": {
+    "filePatterns": [
+      "*.tf",
+      "*.tfvars",
+      "*.hcl",
+      "Dockerfile",
+      "docker-compose*.yml",
+      "*.k8s.yml",
+      "*.kubernetes.yml"
+    ],
+    "workspaceContains": [
+      "terraform/",
+      "infrastructure/",
+      "docker-compose.yml",
+      "Dockerfile",
+      "k8s/",
+      "kubernetes/"
+    ]
+  }
+}

@@ -4,13 +4,102 @@
     "python.defaultInterpreterPath": "/usr/bin/python3",
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
-    "editor.formatOnSave": true
+    "python.linting.flake8Enabled": true,
+    "editor.formatOnSave": true,
+    "files.associations": {
+      "*.py": "python",
+      "*.pyi": "python",
+      "*.pyw": "python",
+      "*.pyx": "python",
+      "*.pxd": "python",
+      "*.pxi": "python",
+      "requirements*.txt": "pip-requirements",
+      "Pipfile": "toml",
+      "pyproject.toml": "toml",
+      "setup.cfg": "ini"
+    },
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.linting.mypyEnabled": true
+  },
   },
   "extensions": {
     "recommendations": [
+      "GitHub.copilot",
+      "GitHub.copilot-chat",
+      "modelcontextprotocol.mcp",
       "ms-python.python",
       "ms-python.pylint",
-      "ms-python.black-formatter"
+      "ms-python.black-formatter",
+      "ms-python.isort",
+      "ms-python.flake8",
+      "ms-python.mypy-type-checker",
+      "charliermarsh.ruff",
+      "ms-toolsai.jupyter"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Bootstrap Python Profile",
+        "type": "shell",
+        "command": "${workspaceFolder}/scripts/bootstrap.sh",
+        "args": ["--profile", "python"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Run Python Tests",
+        "type": "shell",
+        "command": "python",
+        "args": ["-m", "pytest"],
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Install Requirements",
+        "type": "shell",
+        "command": "pip",
+        "args": ["install", "-r", "requirements.txt"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      }
+    ]
+  },
+  "contextTriggers": {
+    "filePatterns": [
+      "*.py",
+      "*.pyi",
+      "*.pyw",
+      "*.pyx",
+      "requirements*.txt",
+      "Pipfile",
+      "pyproject.toml",
+      "setup.py",
+      "setup.cfg"
+    ],
+    "workspaceContains": [
+      "requirements.txt",
+      "setup.py",
+      "pyproject.toml",
+      "Pipfile",
+      "*.py"
     ]
   }
 }

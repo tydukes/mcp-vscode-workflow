@@ -1,0 +1,103 @@
+{
+  "name": "Bash Development Profile",
+  "settings": {
+    "files.associations": {
+      "*.sh": "shellscript",
+      "*.bash": "shellscript",
+      "*.zsh": "shellscript",
+      ".bashrc": "shellscript",
+      ".bash_profile": "shellscript",
+      ".zshrc": "shellscript",
+      ".profile": "shellscript"
+    },
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "shellcheck.enable": true,
+    "shellcheck.executablePath": "shellcheck",
+    "shellformat.useEditorConfig": true,
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    "terminal.integrated.profiles.osx": {
+      "zsh": {
+        "path": "/bin/zsh",
+        "args": ["-l"]
+      },
+      "bash": {
+        "path": "/bin/bash",
+        "args": ["-l"]
+      }
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "GitHub.copilot",
+      "GitHub.copilot-chat",
+      "modelcontextprotocol.mcp",
+      "timonwong.shellcheck",
+      "foxundermoon.shell-format",
+      "rogalmic.bash-debug",
+      "mads-hartmann.bash-ide-vscode",
+      "rpinski.shebang-snippets"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Bootstrap Bash Profile",
+        "type": "shell",
+        "command": "${workspaceFolder}/scripts/bootstrap.sh",
+        "args": ["--profile", "bash"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Check Shell Scripts",
+        "type": "shell",
+        "command": "find",
+        "args": [".", "-name", "*.sh", "-exec", "shellcheck", "{}", "+"],
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Make Script Executable",
+        "type": "shell",
+        "command": "chmod",
+        "args": ["+x", "${file}"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "silent"
+        },
+        "problemMatcher": []
+      }
+    ]
+  },
+  "contextTriggers": {
+    "filePatterns": [
+      "*.sh",
+      "*.bash",
+      "*.zsh",
+      ".bashrc",
+      ".bash_profile",
+      ".zshrc",
+      ".profile"
+    ],
+    "workspaceContains": [
+      "scripts/",
+      "bin/",
+      "tools/",
+      "*.sh"
+    ]
+  }
+}
