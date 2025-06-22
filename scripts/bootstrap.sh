@@ -195,8 +195,8 @@ launch_profile_script() {
         log_success "Profile startup script completed"
         return 0
     else
-        log_warn "Profile startup script failed (continuing anyway)"
-        return 0
+        log_error "Profile startup script failed"
+        return 1
     fi
 }
 
