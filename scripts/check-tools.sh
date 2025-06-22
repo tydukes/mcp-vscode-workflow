@@ -111,7 +111,7 @@ get_install_command() {
                 ansible) echo "sudo dnf install ansible" ;;
                 docker) echo "sudo dnf install docker" ;;
                 jq) echo "sudo dnf install jq" ;;
-                shellcheck) echo "sudo dnf install ShellCheck" ;;
+                shellcheck) echo "sudo dnf install shellcheck" ;;
                 *) echo "sudo dnf install $tool" ;;
             esac
             ;;
