@@ -16,10 +16,10 @@ This guide will help you set up and use the MCP VS Code Workflow system for enha
    ```bash
    # For Python development
    ./scripts/start-python-profile.sh
-   
+
    # For documentation work
    ./scripts/start-docs-profile.sh
-   
+
    # For infrastructure/DevOps
    ./scripts/start-infra-profile.sh
    ```

@@ -308,7 +308,7 @@ Ctrl+Shift+P → "MCP: Switch to Python Assistant"
 **Sequential Consultation:**
 ```bash
 # Get multiple perspectives
-@python "Review this code" 
+@python "Review this code"
 @security "Check for vulnerabilities"
 @senior-architect "Assess the design approach"
 ```
@@ -341,7 +341,7 @@ Ctrl+Shift+P → "MCP: Switch to Python Assistant"
 2. **Create Prompt Template:**
    ```markdown
    # Frontend Development Specialist
-   
+
    You are an expert frontend developer specializing in:
    - Modern JavaScript frameworks (React, Vue, Angular)
    - Performance optimization
@@ -408,7 +408,7 @@ Ctrl+Shift+P → "MCP: Switch to Python Assistant"
 ```bash
 # Use multiple roles for comprehensive analysis
 @python "Review code structure"
-@security "Check for vulnerabilities" 
+@security "Check for vulnerabilities"
 @senior-architect "Evaluate overall design"
 ```
 

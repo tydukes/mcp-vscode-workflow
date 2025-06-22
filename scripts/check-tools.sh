@@ -2,7 +2,7 @@
 
 # check-tools.sh
 # Script to validate presence of CLI tools by profile
-# 
+#
 # Validates CLI tools required for different development profiles:
 # - Bash Profile: basic shell tools (jq, shellcheck)
 # - CI/CD Profile: docker, jq, shellcheck
@@ -68,7 +68,7 @@ detect_os() {
 get_install_command() {
     local tool="$1"
     local os="$2"
-    
+
     case "$os" in
         macos)
             case "$tool" in
@@ -126,7 +126,7 @@ check_tool() {
     local tool="$1"
     local required="$2"
     local os="$3"
-    
+
     if command_exists "$tool"; then
         log_info "✓ $tool is installed"
         return 0
@@ -148,10 +148,10 @@ check_profile_tools() {
     local profile="$1"
     local os="$2"
     local missing_required=0
-    
+
     log_info "Checking tools for $profile profile..."
     echo
-    
+
     case "$profile" in
         bash)
             check_tool "jq" "true" "$os" || ((missing_required++))
@@ -201,7 +201,7 @@ check_profile_tools() {
             return 1
             ;;
     esac
-    
+
     echo
     if [[ $missing_required -gt 0 ]]; then
         log_error "$missing_required required tool(s) missing for $profile profile"
@@ -253,7 +253,7 @@ EOF
 main() {
     # Parse command line arguments
     local profile=""
-    
+
     while [[ $# -gt 0 ]]; do
         case $1 in
             --profile)
@@ -277,32 +277,32 @@ main() {
                 ;;
         esac
     done
-    
+
     # Detect operating system
     local os
     os=$(detect_os)
     log_info "Detected OS: $os"
     echo
-    
+
     # If no profile specified, check all profiles
     if [[ -z "$profile" ]]; then
         local overall_status=0
         local profiles=("bash" "cicd" "docs" "infra" "python" "node")
-        
+
         for p in "${profiles[@]}"; do
             if ! check_profile_tools "$p" "$os"; then
                 overall_status=1
             fi
             echo "----------------------------------------"
         done
-        
+
         echo
         if [[ $overall_status -eq 0 ]]; then
             log_info "All profiles have their required tools available"
         else
             log_error "One or more profiles have missing required tools"
         fi
-        
+
         exit $overall_status
     else
         # Check specific profile

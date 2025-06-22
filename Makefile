@@ -71,9 +71,9 @@ lint: ## Run all linting checks
 	@echo "3. Running isort check..."
 	@if command -v uv >/dev/null 2>&1; then uv run isort --check-only .; else isort --check-only .; fi
 	@echo "4. Running shellcheck..."
-	@find . -name "*.sh" -type f -exec shellcheck {} +
+	@find . -name "*.sh" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" -exec shellcheck {} +
 	@echo "5. Validating JSON files..."
-	@find . -name "*.json" -type f -exec jq empty {} \;
+	@find . -name "*.json" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" -exec jq empty {} \;
 
 format: ## Format code
 	@echo "Formatting code..."
@@ -129,7 +129,10 @@ bootstrap-bash: ## Bootstrap Bash/Shell environment
 # Pre-commit commands
 setup-hooks: ## Install pre-commit hooks
 	@echo "Installing pre-commit hooks..."
-	@if command -v pre-commit >/dev/null 2>&1; then \
+	@if [ -f ".venv/bin/pre-commit" ]; then \
+		.venv/bin/pre-commit install; \
+		.venv/bin/pre-commit install --hook-type commit-msg; \
+	elif command -v pre-commit >/dev/null 2>&1; then \
 		pre-commit install; \
 		pre-commit install --hook-type commit-msg; \
 	else \
@@ -139,11 +142,19 @@ setup-hooks: ## Install pre-commit hooks
 
 run-hooks: ## Run pre-commit hooks on all files
 	@echo "Running pre-commit hooks on all files..."
-	@pre-commit run --all-files
+	@if [ -f ".venv/bin/pre-commit" ]; then \
+		.venv/bin/pre-commit run --all-files; \
+	else \
+		pre-commit run --all-files; \
+	fi
 
 update-hooks: ## Update pre-commit hooks
 	@echo "Updating pre-commit hooks..."
-	@pre-commit autoupdate
+	@if [ -f ".venv/bin/pre-commit" ]; then \
+		.venv/bin/pre-commit autoupdate; \
+	else \
+		pre-commit autoupdate; \
+	fi
 
 # CI/CD simulation
 ci-local: ## Run full CI pipeline locally

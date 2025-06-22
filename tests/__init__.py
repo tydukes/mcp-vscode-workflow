@@ -5,7 +5,6 @@ This module provides test utilities and fixtures for testing
 Python components if they are added to the project.
 """
 
-import os
 import sys
 from pathlib import Path
 

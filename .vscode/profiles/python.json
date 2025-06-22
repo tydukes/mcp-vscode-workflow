@@ -23,7 +23,6 @@
     "python.analysis.typeCheckingMode": "basic",
     "python.linting.mypyEnabled": true
   },
-  },
   "extensions": {
     "recommendations": [
       "GitHub.copilot",

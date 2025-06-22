@@ -156,7 +156,7 @@ Each MCP server integrates with VS Code through the MCP extension:
 
 **Command Palette Access:**
 - `Ctrl+Shift+P` → "MCP: Sequential Thinking"
-- `Ctrl+Shift+P` → "MCP: Task Master" 
+- `Ctrl+Shift+P` → "MCP: Task Master"
 - `Ctrl+Shift+P` → "MCP: Context7"
 
 **Keyboard Shortcuts:**
