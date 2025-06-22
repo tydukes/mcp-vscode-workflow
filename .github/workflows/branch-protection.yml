@@ -1,0 +1,229 @@
+name: Branch Protection
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [ main, develop ]
+
+# Ensure all required checks pass before allowing merge
+jobs:
+  check-ci-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI workflow status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { number } = context.payload.pull_request;
+            
+            // Get the latest commit SHA
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: number
+            });
+            
+            const sha = pr.data.head.sha;
+            
+            // Get all check runs for this commit
+            const checkRuns = await github.rest.checks.listForRef({
+              owner,
+              repo,
+              ref: sha
+            });
+            
+            // Get all status checks for this commit
+            const statuses = await github.rest.repos.listCommitStatusesForRef({
+              owner,
+              repo,
+              ref: sha
+            });
+            
+            console.log(`Found ${checkRuns.data.check_runs.length} check runs`);
+            console.log(`Found ${statuses.data.length} status checks`);
+            
+            // Check if CI workflow has completed successfully
+            const ciWorkflowRuns = checkRuns.data.check_runs.filter(run => 
+              run.name.includes('lint-and-test') || 
+              run.name.includes('security-scan') ||
+              run.name.includes('markdown-lint')
+            );
+            
+            const failedChecks = ciWorkflowRuns.filter(run => 
+              run.status === 'completed' && run.conclusion !== 'success'
+            );
+            
+            const pendingChecks = ciWorkflowRuns.filter(run => 
+              run.status !== 'completed'
+            );
+            
+            if (failedChecks.length > 0) {
+              console.log('❌ Some CI checks have failed:');
+              failedChecks.forEach(check => {
+                console.log(`  - ${check.name}: ${check.conclusion}`);
+              });
+              process.exit(1);
+            }
+            
+            if (pendingChecks.length > 0) {
+              console.log('⏳ Some CI checks are still pending:');
+              pendingChecks.forEach(check => {
+                console.log(`  - ${check.name}: ${check.status}`);
+              });
+              console.log('Waiting for all checks to complete...');
+              process.exit(1);
+            }
+            
+            console.log('✅ All CI checks have passed successfully');
+
+  enforce-requirements:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Check PR title format
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            
+            // Define allowed prefixes for conventional commits
+            const allowedPrefixes = [
+              'feat:', 'fix:', 'docs:', 'style:', 'refactor:', 
+              'test:', 'chore:', 'ci:', 'build:', 'perf:'
+            ];
+            
+            const hasValidPrefix = allowedPrefixes.some(prefix => 
+              title.toLowerCase().startsWith(prefix)
+            );
+            
+            if (!hasValidPrefix) {
+              console.log('❌ PR title must follow conventional commit format');
+              console.log(`Current title: "${title}"`);
+              console.log('Valid prefixes:', allowedPrefixes.join(', '));
+              console.log('Example: "feat: add new MCP server integration"');
+              process.exit(1);
+            }
+            
+            console.log('✅ PR title follows conventional commit format');
+
+      - name: Check for required files
+        run: |
+          echo "Checking for required files..."
+          
+          # Check if PR modifies scripts without updating tests
+          if git diff --name-only origin/main...HEAD | grep -q "scripts/.*\.sh"; then
+            echo "Scripts modified, checking for corresponding test updates..."
+            if ! git diff --name-only origin/main...HEAD | grep -q "test.*\.py\|.*test\.py"; then
+              echo "⚠️  Scripts were modified but no tests were updated"
+              echo "Consider adding or updating tests for script changes"
+            fi
+          fi
+          
+          # Check if documentation was updated for significant changes
+          if git diff --name-only origin/main...HEAD | grep -qE "\.(py|sh|json)$"; then
+            if ! git diff --name-only origin/main...HEAD | grep -qE "(README\.md|docs/.*\.md)"; then
+              echo "⚠️  Code changes detected but no documentation updates"
+              echo "Consider updating documentation for significant changes"
+            fi
+          fi
+          
+          echo "✅ File change validation complete"
+
+      - name: Validate branch naming
+        run: |
+          branch_name="${{ github.head_ref }}"
+          echo "Validating branch name: $branch_name"
+          
+          # Allow common branch naming patterns
+          if [[ "$branch_name" =~ ^(feature|feat|fix|hotfix|docs|chore|refactor|test)/.+ ]] || \
+             [[ "$branch_name" =~ ^[0-9]+-[a-zA-Z0-9-]+ ]] || \
+             [[ "$branch_name" =~ ^(main|develop|master)$ ]]; then
+            echo "✅ Branch name follows acceptable pattern"
+          else
+            echo "❌ Branch name should follow pattern: type/description or issue-number-description"
+            echo "Examples: feature/add-mcp-server, fix/shell-script-bug, 123-update-docs"
+            exit 1
+          fi
+
+  size-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Check PR size
+        run: |
+          # Count changed lines (additions + deletions)
+          changed_lines=$(git diff --shortstat origin/main...HEAD | grep -oE '[0-9]+ (insertion|deletion)' | awk '{sum += $1} END {print sum}')
+          changed_files=$(git diff --name-only origin/main...HEAD | wc -l)
+          
+          echo "Changed files: $changed_files"
+          echo "Changed lines: $changed_lines"
+          
+          # Set reasonable limits
+          max_files=50
+          max_lines=1000
+          
+          if [ "$changed_files" -gt "$max_files" ]; then
+            echo "⚠️  This PR changes $changed_files files (limit: $max_files)"
+            echo "Consider breaking this into smaller PRs for easier review"
+          fi
+          
+          if [ "$changed_lines" -gt "$max_lines" ]; then
+            echo "⚠️  This PR changes $changed_lines lines (limit: $max_lines)"
+            echo "Consider breaking this into smaller PRs for easier review"
+          fi
+          
+          echo "✅ PR size validation complete"
+
+  conflict-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Check for merge conflicts
+        run: |
+          echo "Checking for merge conflicts..."
+          
+          # Fetch latest main branch
+          git fetch origin main
+          
+          # Try to merge main into current branch
+          if ! git merge-tree "$(git merge-base HEAD origin/main)" HEAD origin/main | grep -q '<<<<<<<'; then
+            echo "✅ No merge conflicts detected"
+          else
+            echo "❌ Merge conflicts detected with main branch"
+            echo "Please resolve conflicts before merging"
+            exit 1
+          fi
+
+  final-status:
+    runs-on: ubuntu-latest
+    needs: [check-ci-status, enforce-requirements, size-check, conflict-check]
+    if: always()
+    steps:
+      - name: Check all requirements
+        run: |
+          # Check if any required job failed
+          if [ "${{ needs.check-ci-status.result }}" != "success" ] || \
+             [ "${{ needs.enforce-requirements.result }}" != "success" ] || \
+             [ "${{ needs.size-check.result }}" != "success" ] || \
+             [ "${{ needs.conflict-check.result }}" != "success" ]; then
+            echo "❌ One or more branch protection requirements failed"
+            echo "CI Status: ${{ needs.check-ci-status.result }}"
+            echo "Requirements: ${{ needs.enforce-requirements.result }}"
+            echo "Size Check: ${{ needs.size-check.result }}"
+            echo "Conflict Check: ${{ needs.conflict-check.result }}"
+            exit 1
+          fi
+          
+          echo "✅ All branch protection requirements passed"
+          echo "This PR is ready for review and merge"
