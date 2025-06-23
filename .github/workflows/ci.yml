@@ -135,7 +135,7 @@ jobs:
         fi
 
         # Check for common security issues in shell scripts
-        find . -name "*.sh" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" -exec grep -l "eval\|exec\|\$(\|`" {} \; | while read -r file; do
+        find . -name "*.sh" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" -exec grep -l "eval\|exec\|\$(\|\`" {} \; | while read -r file; do
           echo "Warning: Potentially unsafe shell constructs found in $file"
         done
 
