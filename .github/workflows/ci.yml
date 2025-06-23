@@ -89,9 +89,23 @@ jobs:
       run: |
         find . -name "*.json" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" -exec jq empty {} \;
 
+    - name: Run Python linting (if Python files exist)
+      run: |
+        if find . -name "*.py" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" | head -1 | grep -q .; then
+          source .venv/bin/activate
+          echo "Running flake8..."
+          flake8 . --config=pyproject.toml || flake8 .
+          echo "Running black check..."
+          black --check --diff .
+          echo "Running isort check..."
+          isort --check-only --diff .
+        else
+          echo "No Python files found, skipping Python linting"
+        fi
+
     - name: Run Python tests (if present)
       run: |
-        if [ -d "tests" ] || find . \( -name "test_*.py" -o -name "*_test.py" \) -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" | head -1 | grep -q .; then
+        if [ -d "tests" ]; then
           source .venv/bin/activate
           if command -v uv >/dev/null 2>&1; then
             uv run pytest tests/ --cov=tests --cov-report=xml --cov-report=term-missing || pytest tests/ --cov=tests --cov-report=xml --cov-report=term-missing
@@ -99,7 +113,7 @@ jobs:
             pytest tests/ --cov=tests --cov-report=xml --cov-report=term-missing
           fi
         else
-          echo "No Python tests found, skipping pytest"
+          echo "No tests directory found, skipping pytest"
         fi
 
     - name: Upload coverage reports
