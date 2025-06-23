@@ -7,8 +7,8 @@ You are an expert code reviewer. Please review the following code and provide fe
 3. **Security**: Look for security vulnerabilities
 4. **Testing**: Suggest areas that need testing coverage
 
-## Code to Review:
-```
+## Code to Review
+```text
 {{CODE_BLOCK}}
 ```
 

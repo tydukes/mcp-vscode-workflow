@@ -1,5 +1,10 @@
 # MCP VS Code Workflow
 
+[![CI](https://github.com/tydukes/mcp-vscode-workflow/workflows/CI/badge.svg)](https://github.com/tydukes/mcp-vscode-workflow/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 A comprehensive development workflow system that integrates Model Context Protocol (MCP) servers with VS Code profiles to provide AI-enhanced, role-based development assistance.
 
 ## Overview
@@ -61,7 +66,7 @@ Your VS Code environment is now optimized with:
 
 ## Project Structure
 
-```
+```text
 mcp-vscode-workflow/
 ├── .vscode/profiles/          # VS Code profile configurations
 │   ├── python.json           # Python development profile

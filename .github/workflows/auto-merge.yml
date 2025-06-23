@@ -9,23 +9,23 @@ jobs:
   check-auto-mergeable:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]' || contains(github.event.pull_request.title, '[auto-merge]')
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Analyze changes
         id: analyze
         run: |
           echo "Analyzing changes for auto-merge eligibility..."
-          
+
           # Get list of changed files
           changed_files=$(git diff --name-only origin/main...HEAD)
           echo "Changed files:"
           echo "$changed_files"
-          
+
           # Define safe change patterns
           safe_patterns=(
             "docs/.*\.md$"
@@ -38,7 +38,7 @@ jobs:
             "\.github/workflows/.*\.yml$"
             "tests/.*\.py$"
           )
-          
+
           # Define unsafe patterns (critical files that always need review)
           unsafe_patterns=(
             "scripts/bootstrap\.sh$"
@@ -46,13 +46,13 @@ jobs:
             "\.mcp/roles\.json$"
             "\.vscode/profiles/.*\.json$"
           )
-          
+
           auto_mergeable=true
-          
+
           while IFS= read -r file; do
             if [ -n "$file" ]; then
               echo "Checking file: $file"
-              
+
               # Check if file matches unsafe patterns
               for pattern in "${unsafe_patterns[@]}"; do
                 if echo "$file" | grep -qE "$pattern"; then
@@ -61,7 +61,7 @@ jobs:
                   break
                 fi
               done
-              
+
               # If not unsafe, check if it matches safe patterns
               if [ "$auto_mergeable" = "true" ]; then
                 file_safe=false
@@ -72,7 +72,7 @@ jobs:
                     break
                   fi
                 done
-                
+
                 if [ "$file_safe" = "false" ]; then
                   echo "❌ File $file does not match any safe patterns"
                   auto_mergeable=false
@@ -80,9 +80,9 @@ jobs:
               fi
             fi
           done <<< "$changed_files"
-          
+
           echo "auto_mergeable=$auto_mergeable" >> $GITHUB_OUTPUT
-          
+
           if [ "$auto_mergeable" = "true" ]; then
             echo "✅ All changes are safe for auto-merge"
           else
@@ -96,13 +96,13 @@ jobs:
           # Check if changes are small enough for auto-merge
           changed_lines=$(git diff --shortstat origin/main...HEAD | grep -oE '[0-9]+ (insertion|deletion)' | awk '{sum += $1} END {print sum}')
           changed_files=$(git diff --name-only origin/main...HEAD | wc -l)
-          
+
           max_auto_merge_files=10
           max_auto_merge_lines=200
-          
+
           echo "Changed files: $changed_files (limit: $max_auto_merge_files)"
           echo "Changed lines: $changed_lines (limit: $max_auto_merge_lines)"
-          
+
           if [ "$changed_files" -le "$max_auto_merge_files" ] && [ "$changed_lines" -le "$max_auto_merge_lines" ]; then
             echo "size_ok=true" >> $GITHUB_OUTPUT
             echo "✅ Change size is acceptable for auto-merge"
@@ -118,7 +118,7 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const { number } = context.payload.pull_request;
-            
+
             try {
               // Enable auto-merge for this PR
               await github.rest.pulls.createReview({
@@ -128,9 +128,9 @@ jobs:
                 event: 'APPROVE',
                 body: '✅ Auto-approved: Changes are safe and within auto-merge criteria'
               });
-              
+
               console.log('✅ PR approved for auto-merge');
-              
+
               // Add auto-merge label
               await github.rest.issues.addLabels({
                 owner,
@@ -138,7 +138,7 @@ jobs:
                 issue_number: number,
                 labels: ['auto-merge', 'safe-changes']
               });
-              
+
             } catch (error) {
               console.log('Error enabling auto-merge:', error.message);
             }
@@ -147,7 +147,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [check-auto-mergeable]
     if: github.actor == 'dependabot[bot]' && needs.check-auto-mergeable.result == 'success'
-    
+
     steps:
       - name: Enable auto-merge for dependabot
         uses: actions/github-script@v7
@@ -155,25 +155,25 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const { number } = context.payload.pull_request;
-            
+
             // Get PR details
             const pr = await github.rest.pulls.get({
               owner,
               repo,
               pull_number: number
             });
-            
+
             // Only auto-merge patch and minor updates
             const title = pr.data.title.toLowerCase();
             const isMinorUpdate = title.includes('bump') && (
-              title.includes('patch') || 
+              title.includes('patch') ||
               title.includes('minor') ||
               /\d+\.\d+\.\d+.*\d+\.\d+\.\d+/.test(title)
             );
-            
+
             if (isMinorUpdate) {
               console.log('✅ Dependabot PR eligible for auto-merge');
-              
+
               // Approve the PR
               await github.rest.pulls.createReview({
                 owner,
@@ -182,7 +182,7 @@ jobs:
                 event: 'APPROVE',
                 body: '✅ Auto-approved: Dependabot patch/minor version update'
               });
-              
+
               // Add labels
               await github.rest.issues.addLabels({
                 owner,
@@ -190,7 +190,7 @@ jobs:
                 issue_number: number,
                 labels: ['dependencies', 'auto-merge']
               });
-              
+
             } else {
               console.log('⚠️ Dependabot PR requires manual review (major version change)');
             }
@@ -200,7 +200,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [check-auto-mergeable]
     if: needs.check-auto-mergeable.result == 'success'
-    
+
     steps:
       - name: Wait for CI completion
         uses: actions/github-script@v7
@@ -208,38 +208,38 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const { number } = context.payload.pull_request;
-            
+
             // Wait for CI workflows to complete
             const maxWaitTime = 20 * 60 * 1000; // 20 minutes
             const startTime = Date.now();
-            
+
             while (Date.now() - startTime < maxWaitTime) {
               const pr = await github.rest.pulls.get({
                 owner,
                 repo,
                 pull_number: number
               });
-              
+
               const sha = pr.data.head.sha;
-              
+
               // Get check runs
               const checkRuns = await github.rest.checks.listForRef({
                 owner,
                 repo,
                 ref: sha
               });
-              
+
               const relevantChecks = checkRuns.data.check_runs.filter(run =>
                 run.name.includes('lint-and-test') ||
                 run.name.includes('security-scan') ||
                 run.name.includes('markdown-lint')
               );
-              
+
               const allCompleted = relevantChecks.every(check => check.status === 'completed');
-              const allSuccessful = relevantChecks.every(check => 
+              const allSuccessful = relevantChecks.every(check =>
                 check.status === 'completed' && check.conclusion === 'success'
               );
-              
+
               if (allCompleted && allSuccessful) {
                 console.log('✅ All CI checks completed successfully');
                 return;
@@ -247,10 +247,10 @@ jobs:
                 console.log('❌ Some CI checks failed');
                 process.exit(1);
               }
-              
+
               console.log('⏳ Waiting for CI checks to complete...');
               await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
             }
-            
+
             console.log('⏰ Timeout waiting for CI completion');
             process.exit(1);
