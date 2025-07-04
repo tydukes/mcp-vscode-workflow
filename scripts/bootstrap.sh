@@ -978,7 +978,8 @@ main() {
     local script_dir
     script_dir=$(get_script_dir)
     local workspace_root
-    workspace_root=$(dirname "$script_dir")
+    # Use current directory as workspace root for auto-detection
+    workspace_root=$(pwd)
 
     # Handle quick mode
     if [[ "$quick" == true ]]; then
