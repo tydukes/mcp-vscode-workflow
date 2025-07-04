@@ -10,6 +10,7 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "Profile Commands:"
+	@echo "  make bootstrap-quick     Quick setup with Python profile (under 60 seconds)"
 	@echo "  make bootstrap-python    Bootstrap Python development profile"
 	@echo "  make bootstrap-infra     Bootstrap Infrastructure profile"
 	@echo "  make bootstrap-docs      Bootstrap Documentation profile"
@@ -104,6 +105,11 @@ validate-configs: ## Validate all configuration files
 	@find .mcp -name "*.json" -type f -exec jq empty {} \;
 	@echo "Validating VS Code profiles..."
 	@find .vscode/profiles -name "*.json" -type f -exec jq empty {} \;
+
+# Quick setup command
+bootstrap-quick: ## Quick setup with Python profile (under 60 seconds)
+	@chmod +x scripts/*.sh
+	@./scripts/bootstrap.sh --quick
 
 # Bootstrap commands for different profiles
 bootstrap-python: ## Bootstrap Python development environment
