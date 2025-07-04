@@ -46,8 +46,55 @@ cd mcp-vscode-workflow
 # Make scripts executable
 chmod +x scripts/*.sh
 
-# Run bootstrap with your preferred profile
+# Option 1: Interactive mode (recommended for new users)
+./scripts/bootstrap.sh --interactive
+
+# Option 2: Direct profile selection
 ./scripts/bootstrap.sh --profile python
+```
+
+### Interactive Mode (Recommended)
+
+The interactive mode automatically detects your project type and guides you through setup:
+
+```bash
+./scripts/bootstrap.sh --interactive
+```
+
+**What the interactive mode does:**
+1. **Auto-detects** your project type based on existing files
+2. **Asks questions** about your development preferences
+3. **Recommends** the best profile for your needs
+4. **Shows preview** of tools and configurations to be installed
+5. **Requests confirmation** before proceeding
+
+**Example interaction:**
+```
+✓ Auto-detected project types: python, docs
+
+1. What is your primary development activity?
+   a) Writing Python code (web apps, data science, APIs)
+   b) Managing infrastructure (Terraform, Kubernetes, cloud)
+   ...
+Your choice (a/b/c/d/e/f): a
+
+2. Which tools do you expect to use most?
+   a) Python, pip, virtual environments, pytest
+   ...
+Your choice (a/b/c/d/e/f): a
+
+=== Recommendation ===
+Based on your project and preferences, we recommend: python
+
+=== Installation Preview ===
+Profile: python
+Tools and configurations that will be installed/configured:
+• Python extension pack for VS Code
+• Pylance language server
+• Python debugger and test explorer
+...
+
+Do you want to proceed with the python profile installation? (y/n): y
 ```
 
 ### Manual Setup
@@ -77,17 +124,24 @@ The `bootstrap.sh` script supports several options:
 ./scripts/bootstrap.sh [OPTIONS]
 
 Options:
-  --profile <name>     Required. Profile to launch (bash, cicd, docs, infra, python)
-  --check-only         Only validate prerequisites, don't install
-  --verbose           Enable detailed output
-  --force             Force reinstall MCP packages
+  --profile <name>     Use specific profile (bash, cicd, docs, infra, python, node)
+  --interactive        Launch interactive mode with auto-detection and wizard
   --help              Show this help message
 
 Examples:
-  ./scripts/bootstrap.sh --profile python
-  ./scripts/bootstrap.sh --profile docs --verbose
-  ./scripts/bootstrap.sh --check-only
+  ./scripts/bootstrap.sh --interactive           # Interactive wizard (recommended)
+  ./scripts/bootstrap.sh --profile python        # Direct profile selection
+  ./scripts/bootstrap.sh --profile docs          # Documentation profile
 ```
+
+### Interactive Mode Benefits
+
+- **Zero configuration**: No need to know which profile to choose
+- **Auto-detection**: Automatically identifies your project type
+- **Guided setup**: Step-by-step wizard for new users
+- **Smart recommendations**: Suggests optimal profile based on your needs
+- **Preview mode**: Shows exactly what will be installed before proceeding
+- **Educational**: Learn about available profiles and their purposes
 
 ## Verification
 
