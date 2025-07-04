@@ -627,11 +627,11 @@ open_vscode_with_profile() {
 run_quick_setup() {
     local script_dir="$1"
     local workspace_root="$2"
-    
+
     log_info "Starting quick setup mode for fast development environment"
     log_info "Using Python profile with minimal validation"
     echo
-    
+
     # Step 1: Quick VS Code check (don't fail if not found)
     log_step "Quick VS Code check..."
     if command -v code >/dev/null 2>&1; then
@@ -639,11 +639,11 @@ run_quick_setup() {
     else
         log_warn "VS Code CLI not found - you may need to install it later"
     fi
-    
+
     # Step 2: Basic tool check for common tools (quick check, don't fail)
     log_step "Quick tool availability check..."
     local tools_status=()
-    
+
     # Check git
     if command -v git >/dev/null 2>&1; then
         log_info "✓ git available"
@@ -652,7 +652,7 @@ run_quick_setup() {
         log_warn "git not found - consider installing for version control"
         tools_status+=("git: ✗")
     fi
-    
+
     # Check node
     if command -v node >/dev/null 2>&1; then
         log_info "✓ node available"
@@ -661,7 +661,7 @@ run_quick_setup() {
         log_warn "node not found - some MCP features may be limited"
         tools_status+=("node: ✗")
     fi
-    
+
     # Check python
     if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
         log_info "✓ python available"
@@ -670,7 +670,7 @@ run_quick_setup() {
         log_warn "python not found - may need to install for Python development"
         tools_status+=("python: ✗")
     fi
-    
+
     # Step 3: Quick MCP package check (don't install, just verify npm is available)
     log_step "Quick MCP package check..."
     if command -v npm >/dev/null 2>&1; then
@@ -678,7 +678,7 @@ run_quick_setup() {
     else
         log_warn "npm not found - MCP packages may need manual installation"
     fi
-    
+
     # Step 4: Launch Python profile script (lightweight)
     log_step "Setting up Python profile..."
     local profile_script="$script_dir/start-python-profile.sh"
@@ -691,7 +691,7 @@ run_quick_setup() {
     else
         log_info "Python profile script not found or empty - using default setup"
     fi
-    
+
     # Step 5: Quick VS Code setup (don't fail on errors)
     log_step "Quick VS Code setup..."
     if command -v code >/dev/null 2>&1; then
@@ -701,19 +701,19 @@ run_quick_setup() {
     else
         log_info "VS Code setup skipped - CLI not available"
     fi
-    
+
     return 0
 }
 
 # Function to show quick setup success message
 show_quick_success_message() {
     local workspace_root="$1"
-    
+
     echo
     log_success "🚀 Quick setup completed successfully!"
     log_info "Your Python development environment is ready in under 60 seconds"
     echo
-    
+
     echo -e "${BLUE}WHAT'S NEXT:${NC}"
     echo "  1. Open VS Code:"
     echo "     ${CYAN}code $workspace_root${NC}"
@@ -725,7 +725,7 @@ show_quick_success_message() {
     echo "     ${CYAN}python -m venv venv${NC}"
     echo "     ${CYAN}# Activate it${NC}"
     echo "     ${CYAN}source venv/bin/activate  # (Linux/Mac)${NC}"
-    echo "     ${CYAN}# or: venv\\Scripts\\activate  # (Windows)${NC}"
+    printf "     %s# or: venv\\Scripts\\activate  # (Windows)%s\n" "${CYAN}" "${NC}"
     echo
     echo "  3. Install MCP packages when needed:"
     echo "     ${CYAN}./scripts/install-mcp-npx.sh${NC}"
@@ -786,20 +786,20 @@ main() {
             show_usage
             exit 1
         fi
-        
+
         if [[ -n "$profile" ]]; then
             log_error "Cannot use --quick and --profile together"
             log_error "Quick mode automatically uses Python profile"
             show_usage
             exit 1
         fi
-        
+
         # Run quick setup
         log_info "Starting MCP VS Code workflow quick setup"
         log_info "Profile: python (default for quick mode)"
         log_info "Workspace: $workspace_root"
         echo
-        
+
         if run_quick_setup "$script_dir" "$workspace_root"; then
             show_quick_success_message "$workspace_root"
             exit 0
