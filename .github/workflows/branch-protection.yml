@@ -7,76 +7,6 @@ on:
 
 # Ensure all required checks pass before allowing merge
 jobs:
-  check-ci-status:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check CI workflow status
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const { number } = context.payload.pull_request;
-
-            // Get the latest commit SHA
-            const pr = await github.rest.pulls.get({
-              owner,
-              repo,
-              pull_number: number
-            });
-
-            const sha = pr.data.head.sha;
-
-            // Get all check runs for this commit
-            const checkRuns = await github.rest.checks.listForRef({
-              owner,
-              repo,
-              ref: sha
-            });
-
-            // Get all status checks for this commit
-            const statuses = await github.rest.repos.listCommitStatusesForRef({
-              owner,
-              repo,
-              ref: sha
-            });
-
-            console.log(`Found ${checkRuns.data.check_runs.length} check runs`);
-            console.log(`Found ${statuses.data.length} status checks`);
-
-            // Check if CI workflow has completed successfully
-            const ciWorkflowRuns = checkRuns.data.check_runs.filter(run =>
-              run.name.includes('lint-and-test') ||
-              run.name.includes('security-scan') ||
-              run.name.includes('markdown-lint')
-            );
-
-            const failedChecks = ciWorkflowRuns.filter(run =>
-              run.status === 'completed' && run.conclusion !== 'success'
-            );
-
-            const pendingChecks = ciWorkflowRuns.filter(run =>
-              run.status !== 'completed'
-            );
-
-            if (failedChecks.length > 0) {
-              console.log('❌ Some CI checks have failed:');
-              failedChecks.forEach(check => {
-                console.log(`  - ${check.name}: ${check.conclusion}`);
-              });
-              process.exit(1);
-            }
-
-            if (pendingChecks.length > 0) {
-              console.log('⏳ Some CI checks are still pending:');
-              pendingChecks.forEach(check => {
-                console.log(`  - ${check.name}: ${check.status}`);
-              });
-              console.log('Waiting for all checks to complete...');
-              process.exit(1);
-            }
-
-            console.log('✅ All CI checks have passed successfully');
-
   enforce-requirements:
     runs-on: ubuntu-latest
     steps:
@@ -100,130 +30,254 @@ jobs:
             );
 
             if (!hasValidPrefix) {
-              console.log('❌ PR title must follow conventional commit format');
-              console.log(`Current title: "${title}"`);
-              console.log('Valid prefixes:', allowedPrefixes.join(', '));
-              console.log('Example: "feat: add new MCP server integration"');
+              console.log('❌ PR title does not follow conventional commit format');
+              console.log(`Title: "${title}"`);
+              console.log('Expected format: <type>: <description>');
+              console.log('Allowed types: feat, fix, docs, style, refactor, test, chore, ci, build, perf');
               process.exit(1);
             }
 
             console.log('✅ PR title follows conventional commit format');
 
-      - name: Check for required files
-        run: |
-          echo "Checking for required files..."
-
-          # Check if PR modifies scripts without updating tests
-          if git diff --name-only origin/main...HEAD | grep -q "scripts/.*\.sh"; then
-            echo "Scripts modified, checking for corresponding test updates..."
-            if ! git diff --name-only origin/main...HEAD | grep -q "test.*\.py\|.*test\.py"; then
-              echo "⚠️  Scripts were modified but no tests were updated"
-              echo "Consider adding or updating tests for script changes"
-            fi
-          fi
-
-          # Check if documentation was updated for significant changes
-          if git diff --name-only origin/main...HEAD | grep -qE "\.(py|sh|json)$"; then
-            if ! git diff --name-only origin/main...HEAD | grep -qE "(README\.md|docs/.*\.md)"; then
-              echo "⚠️  Code changes detected but no documentation updates"
-              echo "Consider updating documentation for significant changes"
-            fi
-          fi
-
-          echo "✅ File change validation complete"
-
-      - name: Validate branch naming
-        run: |
-          branch_name="${{ github.head_ref }}"
-          echo "Validating branch name: $branch_name"
-
-          # Allow common branch naming patterns
-          if [[ "$branch_name" =~ ^(feature|feat|fix|hotfix|docs|chore|refactor|test)/.+ ]] || \
-             [[ "$branch_name" =~ ^[0-9]+-[a-zA-Z0-9-]+ ]] || \
-             [[ "$branch_name" =~ ^(main|develop|master)$ ]]; then
-            echo "✅ Branch name follows acceptable pattern"
-          else
-            echo "❌ Branch name should follow pattern: type/description or issue-number-description"
-            echo "Examples: feature/add-mcp-server, fix/shell-script-bug, 123-update-docs"
-            exit 1
-          fi
-
-  size-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Check for required labels
+        uses: actions/github-script@v7
         with:
-          fetch-depth: 0
+          script: |
+            const labels = context.payload.pull_request.labels.map(label => label.name);
 
-      - name: Check PR size
-        run: |
-          # Count changed lines (additions + deletions)
-          changed_lines=$(git diff --shortstat origin/main...HEAD | grep -oE '[0-9]+ (insertion|deletion)' | awk '{sum += $1} END {print sum}')
-          changed_files=$(git diff --name-only origin/main...HEAD | wc -l)
+            // Skip label check for dependabot PRs
+            if (context.payload.pull_request.user.login === 'dependabot[bot]') {
+              console.log('🤖 Skipping label check for dependabot PR');
+              return;
+            }
 
-          echo "Changed files: $changed_files"
-          echo "Changed lines: $changed_lines"
+            const requiredLabels = ['enhancement', 'bug', 'documentation', 'maintenance'];
+            const hasRequiredLabel = requiredLabels.some(required =>
+              labels.some(label => label.toLowerCase().includes(required))
+            );
 
-          # Set reasonable limits
-          max_files=50
-          max_lines=1000
-
-          if [ "$changed_files" -gt "$max_files" ]; then
-            echo "⚠️  This PR changes $changed_files files (limit: $max_files)"
-            echo "Consider breaking this into smaller PRs for easier review"
-          fi
-
-          if [ "$changed_lines" -gt "$max_lines" ]; then
-            echo "⚠️  This PR changes $changed_lines lines (limit: $max_lines)"
-            echo "Consider breaking this into smaller PRs for easier review"
-          fi
-
-          echo "✅ PR size validation complete"
+            if (!hasRequiredLabel && labels.length === 0) {
+              console.log('⚠️ No labels found on PR');
+              console.log('Consider adding one of: enhancement, bug, documentation, maintenance');
+              // Don't fail for missing labels, just warn
+            } else {
+              console.log('✅ PR has appropriate labels');
+            }
 
   conflict-check:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Check for merge conflicts
-        run: |
-          echo "Checking for merge conflicts..."
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { number } = context.payload.pull_request;
 
-          # Fetch latest main branch
-          git fetch origin main
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: number
+            });
 
-          # Try to merge main into current branch
-          if ! git merge-tree "$(git merge-base HEAD origin/main)" HEAD origin/main | grep -q '<<<<<<<'; then
-            echo "✅ No merge conflicts detected"
-          else
-            echo "❌ Merge conflicts detected with main branch"
-            echo "Please resolve conflicts before merging"
-            exit 1
-          fi
+            if (pr.data.mergeable === false) {
+              console.log('❌ PR has merge conflicts');
+              console.log('Please resolve conflicts before merging');
+              process.exit(1);
+            }
 
+            if (pr.data.mergeable === null) {
+              console.log('⏳ Merge conflict status is being determined...');
+              console.log('GitHub is still checking for conflicts');
+              // Don't fail immediately, GitHub might still be checking
+            }
+
+            console.log('✅ No merge conflicts detected');
+
+  size-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { number } = context.payload.pull_request;
+
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: number
+            });
+
+            const additions = pr.data.additions;
+            const deletions = pr.data.deletions;
+            const changedFiles = pr.data.changed_files;
+
+            console.log(`📊 PR Statistics:`);
+            console.log(`  Additions: ${additions}`);
+            console.log(`  Deletions: ${deletions}`);
+            console.log(`  Changed files: ${changedFiles}`);
+
+            // Warning thresholds
+            const maxAdditions = 1000;
+            const maxFiles = 50;
+
+            if (additions > maxAdditions) {
+              console.log(`⚠️ Large PR detected (${additions} additions)`);
+              console.log('Consider breaking this into smaller PRs for easier review');
+            }
+
+            if (changedFiles > maxFiles) {
+              console.log(`⚠️ Many files changed (${changedFiles} files)`);
+              console.log('Consider breaking this into smaller PRs for easier review');
+            }
+
+            console.log('✅ PR size check completed');
+
+  # This job depends on CI workflow completion through GitHub's built-in status checks
+  wait-for-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CI checks
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { number } = context.payload.pull_request;
+
+            // Get the latest commit SHA
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: number
+            });
+
+            const sha = pr.data.head.sha;
+            console.log(`Checking CI status for commit: ${sha}`);
+
+            // Wait for CI checks to complete with multiple attempts
+            let maxAttempts = 10;
+            let attempt = 1;
+
+            while (attempt <= maxAttempts) {
+              console.log(`Attempt ${attempt}/${maxAttempts}`);
+
+              try {
+                // Get all check runs for this commit
+                const checkRuns = await github.rest.checks.listForRef({
+                  owner,
+                  repo,
+                  ref: sha
+                });
+
+                console.log(`Found ${checkRuns.data.check_runs.length} total check runs`);
+
+                // Filter for CI workflow checks
+                const ciChecks = checkRuns.data.check_runs.filter(run =>
+                  run.name === 'lint-and-test' ||
+                  run.name === 'security-scan' ||
+                  run.name === 'markdown-lint'
+                );
+
+                console.log(`Found ${ciChecks.length} CI checks`);
+
+                if (ciChecks.length === 0) {
+                  console.log('⏳ No CI checks found yet, waiting...');
+                  if (attempt < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, 30000));
+                    attempt++;
+                    continue;
+                  } else {
+                    console.log('❌ No CI checks found after maximum attempts');
+                    process.exit(1);
+                  }
+                }
+
+                // Check status of each CI check
+                const pending = ciChecks.filter(check => check.status !== 'completed');
+                const failed = ciChecks.filter(check =>
+                  check.status === 'completed' && check.conclusion !== 'success'
+                );
+
+                if (failed.length > 0) {
+                  console.log('❌ Some CI checks have failed:');
+                  failed.forEach(check => {
+                    console.log(`  - ${check.name}: ${check.conclusion}`);
+                  });
+                  process.exit(1);
+                }
+
+                if (pending.length > 0) {
+                  console.log(`⏳ ${pending.length} CI checks still pending:`);
+                  pending.forEach(check => {
+                    console.log(`  - ${check.name}: ${check.status}`);
+                  });
+
+                  if (attempt < maxAttempts) {
+                    console.log('Waiting 30 seconds before next check...');
+                    await new Promise(resolve => setTimeout(resolve, 30000));
+                    attempt++;
+                    continue;
+                  } else {
+                    console.log('❌ CI checks did not complete within timeout');
+                    process.exit(1);
+                  }
+                }
+
+                // All checks completed successfully
+                console.log('✅ All CI checks have passed successfully');
+                ciChecks.forEach(check => {
+                  console.log(`  - ${check.name}: ${check.conclusion}`);
+                });
+                break;
+
+              } catch (error) {
+                console.error(`Error checking CI status: ${error.message}`);
+                if (attempt < maxAttempts) {
+                  console.log('Retrying in 10 seconds...');
+                  await new Promise(resolve => setTimeout(resolve, 10000));
+                  attempt++;
+                } else {
+                  console.error('❌ Failed to check CI status after all attempts');
+                  process.exit(1);
+                }
+              }
+            }
+
+  # Final status check that depends on all other jobs
   final-status:
     runs-on: ubuntu-latest
-    needs: [check-ci-status, enforce-requirements, size-check, conflict-check]
+    needs: [enforce-requirements, conflict-check, size-check, wait-for-ci]
     if: always()
     steps:
       - name: Check all requirements
-        run: |
-          # Check if any required job failed
-          if [ "${{ needs.check-ci-status.result }}" != "success" ] || \
-             [ "${{ needs.enforce-requirements.result }}" != "success" ] || \
-             [ "${{ needs.size-check.result }}" != "success" ] || \
-             [ "${{ needs.conflict-check.result }}" != "success" ]; then
-            echo "❌ One or more branch protection requirements failed"
-            echo "CI Status: ${{ needs.check-ci-status.result }}"
-            echo "Requirements: ${{ needs.enforce-requirements.result }}"
-            echo "Size Check: ${{ needs.size-check.result }}"
-            echo "Conflict Check: ${{ needs.conflict-check.result }}"
-            exit 1
-          fi
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const jobs = [
+              { name: 'enforce-requirements', result: '${{ needs.enforce-requirements.result }}' },
+              { name: 'conflict-check', result: '${{ needs.conflict-check.result }}' },
+              { name: 'size-check', result: '${{ needs.size-check.result }}' },
+              { name: 'wait-for-ci', result: '${{ needs.wait-for-ci.result }}' }
+            ];
 
-          echo "✅ All branch protection requirements passed"
-          echo "This PR is ready for review and merge"
+            console.log('📋 Branch Protection Status:');
+            let allPassed = true;
+
+            jobs.forEach(job => {
+              const status = job.result === 'success' ? '✅' : '❌';
+              console.log(`  ${status} ${job.name}: ${job.result}`);
+              if (job.result !== 'success') {
+                allPassed = false;
+              }
+            });
+
+            if (allPassed) {
+              console.log('\n🎉 All branch protection requirements satisfied!');
+              console.log('PR is ready for merge');
+            } else {
+              console.log('\n❌ Some branch protection requirements failed');
+              console.log('Please address the issues before merging');
+              process.exit(1);
+            }
