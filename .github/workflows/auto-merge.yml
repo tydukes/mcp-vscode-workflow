@@ -2,7 +2,7 @@ name: Auto-merge Safe Changes
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, edited]
     branches: [ main, develop ]
 
 permissions:
@@ -56,6 +56,18 @@ jobs:
             "Makefile$"
             "\.github/workflows/.*\.yml$"
             "tests/.*\.py$"
+            "scripts/debug-.*\.sh$"
+            "scripts/check-.*\.sh$"
+            "\.vscode/settings\.json$"
+            "LICENSE$"
+            "\.yamllint$"
+            "\.flake8$"
+            "setup\.cfg$"
+            "tox\.ini$"
+            "\.coveragerc$"
+            "codecov\.yml$"
+            "\.editorconfig$"
+            "\.gitattributes$"
           )
 
           # Define unsafe patterns (critical files that always need review)
@@ -151,12 +163,25 @@ jobs:
 
               console.log('✅ PR approved for auto-merge');
 
-              // Enable auto-merge using GitHub's auto-merge feature
-              await github.rest.pulls.enableAutoMerge({
-                owner,
-                repo,
-                pull_number: number,
-                merge_method: 'squash'
+              // Enable auto-merge using GitHub's GraphQL API
+              const prId = context.payload.pull_request.node_id;
+              await github.graphql(`
+                mutation EnableAutoMerge($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+                  enablePullRequestAutoMerge(input: {
+                    pullRequestId: $pullRequestId
+                    mergeMethod: $mergeMethod
+                  }) {
+                    pullRequest {
+                      autoMergeRequest {
+                        enabledAt
+                        mergeMethod
+                      }
+                    }
+                  }
+                }
+              `, {
+                pullRequestId: prId,
+                mergeMethod: 'SQUASH'
               });
 
               console.log('✅ Auto-merge enabled successfully');
@@ -217,12 +242,25 @@ jobs:
                 body: '✅ Auto-approved: Dependabot patch/minor version update'
               });
 
-              // Enable auto-merge
-              await github.rest.pulls.enableAutoMerge({
-                owner,
-                repo,
-                pull_number: number,
-                merge_method: 'squash'
+              // Enable auto-merge using GitHub's GraphQL API
+              const prId = context.payload.pull_request.node_id;
+              await github.graphql(`
+                mutation EnableAutoMerge($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+                  enablePullRequestAutoMerge(input: {
+                    pullRequestId: $pullRequestId
+                    mergeMethod: $mergeMethod
+                  }) {
+                    pullRequest {
+                      autoMergeRequest {
+                        enabledAt
+                        mergeMethod
+                      }
+                    }
+                  }
+                }
+              `, {
+                pullRequestId: prId,
+                mergeMethod: 'SQUASH'
               });
 
               console.log('✅ Auto-merge enabled for dependabot PR');
@@ -248,63 +286,3 @@ jobs:
             } else {
               console.log('⚠️ Dependabot PR requires manual review (major version change)');
             }
-
-  # Wait for CI to complete before auto-merging
-  wait-for-ci:
-    runs-on: ubuntu-latest
-    needs: [check-auto-mergeable]
-    if: needs.check-auto-mergeable.result == 'success'
-
-    steps:
-      - name: Wait for CI completion
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const { number } = context.payload.pull_request;
-
-            // Wait for CI workflows to complete
-            const maxWaitTime = 20 * 60 * 1000; // 20 minutes
-            const startTime = Date.now();
-
-            while (Date.now() - startTime < maxWaitTime) {
-              const pr = await github.rest.pulls.get({
-                owner,
-                repo,
-                pull_number: number
-              });
-
-              const sha = pr.data.head.sha;
-
-              // Get check runs
-              const checkRuns = await github.rest.checks.listForRef({
-                owner,
-                repo,
-                ref: sha
-              });
-
-              const relevantChecks = checkRuns.data.check_runs.filter(run =>
-                run.name.includes('lint-and-test') ||
-                run.name.includes('security-scan') ||
-                run.name.includes('markdown-lint')
-              );
-
-              const allCompleted = relevantChecks.every(check => check.status === 'completed');
-              const allSuccessful = relevantChecks.every(check =>
-                check.status === 'completed' && check.conclusion === 'success'
-              );
-
-              if (allCompleted && allSuccessful) {
-                console.log('✅ All CI checks completed successfully');
-                return;
-              } else if (allCompleted && !allSuccessful) {
-                console.log('❌ Some CI checks failed');
-                process.exit(1);
-              }
-
-              console.log('⏳ Waiting for CI checks to complete...');
-              await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
-            }
-
-            console.log('⏰ Timeout waiting for CI completion');
-            process.exit(1);
