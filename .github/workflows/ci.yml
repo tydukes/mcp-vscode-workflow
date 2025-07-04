@@ -88,7 +88,7 @@ jobs:
         if find . -name "*.py" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" | head -1 | grep -q .; then
           source .venv/bin/activate
           echo "Running flake8..."
-          flake8 . --config=pyproject.toml || flake8 .
+          flake8 . --config=.flake8
           echo "Running black check..."
           black --check --diff .
           echo "Running isort check..."

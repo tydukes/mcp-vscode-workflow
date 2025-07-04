@@ -4,10 +4,7 @@ Test the auto-detect functionality in bootstrap.sh.
 
 import subprocess
 import tempfile
-import time
 from pathlib import Path
-
-import pytest
 
 from tests import get_script_path
 
@@ -24,7 +21,9 @@ class TestBootstrapAutoDetect:
         )
 
         assert result.returncode == 0
-        assert "Auto-detect profile based on project structure (default)" in result.stdout
+        assert (
+            "Auto-detect profile based on project structure (default)" in result.stdout
+        )
         assert "AUTO-DETECTION:" in result.stdout
         assert "analyze your project structure" in result.stdout
 
@@ -45,7 +44,7 @@ class TestBootstrapAutoDetect:
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             assert result.returncode == 0
@@ -63,8 +62,12 @@ class TestBootstrapAutoDetect:
         # Create a temporary directory with infrastructure files
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create infrastructure project files
-            (Path(tmpdir) / "main.tf").write_text("terraform {\n  required_version = \">= 1.0\"\n}\n")
-            (Path(tmpdir) / "variables.tf").write_text("variable \"environment\" {\n  type = string\n}\n")
+            (Path(tmpdir) / "main.tf").write_text(
+                'terraform {\n  required_version = ">= 1.0"\n}\n'
+            )
+            (Path(tmpdir) / "variables.tf").write_text(
+                'variable "environment" {\n  type = string\n}\n'
+            )
             Path(tmpdir, "terraform").mkdir()
 
             # Test auto-detect with cancellation
@@ -74,7 +77,7 @@ class TestBootstrapAutoDetect:
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             assert result.returncode == 0
@@ -104,7 +107,7 @@ class TestBootstrapAutoDetect:
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             assert result.returncode == 0
@@ -135,7 +138,7 @@ class TestBootstrapAutoDetect:
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             assert result.returncode == 0
@@ -143,8 +146,14 @@ class TestBootstrapAutoDetect:
             assert "python profile detected" in result.stderr
             assert "docs profile detected" in result.stderr
             assert "cicd profile detected" in result.stderr
-            assert "Confidence: Low" in result.stderr or "Confidence: Medium" in result.stderr
-            assert "multiple profile types detected" in result.stderr or "many profile types detected" in result.stderr
+            assert (
+                "Confidence: Low" in result.stderr
+                or "Confidence: Medium" in result.stderr
+            )
+            assert (
+                "multiple profile types detected" in result.stderr
+                or "many profile types detected" in result.stderr
+            )
 
     def test_autodetect_with_no_project_files(self):
         """Test auto-detect mode with empty directory (no specific project type)."""
@@ -159,7 +168,7 @@ class TestBootstrapAutoDetect:
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             assert "No specific project type detected" in result.stderr
@@ -182,7 +191,7 @@ class TestBootstrapAutoDetect:
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             # Should proceed with the recommended profile
@@ -199,14 +208,14 @@ class TestBootstrapAutoDetect:
             (Path(tmpdir) / "requirements.txt").write_text("requests\n")
             (Path(tmpdir) / "main.py").write_text("import requests\n")
 
-            # Test auto-detect with different profile selection (option 2, then c for docs)
+            # Test auto-detect with different profile selection (option 2, then c)
             result = subprocess.run(
                 ["bash", str(script_path)],
                 input="2\nc\n",  # Choose different profile, then docs
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             # Should proceed with chosen profile
@@ -227,11 +236,11 @@ class TestBootstrapAutoDetect:
             # Test auto-detect with interactive fallback (option 3)
             result = subprocess.run(
                 ["bash", str(script_path)],
-                input="3\na\na\nn\n",  # Interactive mode, Python activity, Python tools, No
+                input="3\na\na\nn\n",  # Interactive mode, Python activity, tools, No
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             # Should fall back to interactive mode
@@ -254,7 +263,7 @@ class TestBootstrapAutoDetect:
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             assert "Confidence: High" in result.stderr
@@ -270,14 +279,16 @@ class TestBootstrapAutoDetect:
             (Path(tmpdir) / "pyproject.toml").write_text("[build-system]\n")
             (Path(tmpdir) / "requirements.txt").write_text("requests\n")
             (Path(tmpdir) / "app.py").write_text("print('hello')\n")
-            
+
             # Documentation indicators
             (Path(tmpdir) / "README.md").write_text("# Project\n")
             Path(tmpdir, "docs").mkdir()
-            
+
             # CI/CD indicators
             Path(tmpdir, ".github", "workflows").mkdir(parents=True)
-            (Path(tmpdir) / ".github" / "workflows" / "test.yml").write_text("name: test\n")
+            (Path(tmpdir) / ".github" / "workflows" / "test.yml").write_text(
+                "name: test\n"
+            )
 
             result = subprocess.run(
                 ["bash", str(script_path)],
@@ -285,7 +296,7 @@ class TestBootstrapAutoDetect:
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             # Check that reasoning is shown for each detected profile
@@ -294,11 +305,11 @@ class TestBootstrapAutoDetect:
             assert "Found pyproject.toml" in result.stderr
             assert "Found requirements.txt" in result.stderr
             assert "Found Python (.py) source files" in result.stderr
-            
+
             assert "docs profile detected:" in result.stderr
             assert "Found docs directory" in result.stderr
             assert "Found README.md" in result.stderr
-            
+
             assert "cicd profile detected:" in result.stderr
             assert "Found .github/workflows directory" in result.stderr
 
@@ -312,7 +323,7 @@ class TestBootstrapAutoDetect:
             input="n\n",  # No to installation
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         # Should skip auto-detect and use specified profile
@@ -325,7 +336,7 @@ class TestBootstrapAutoDetect:
             input="a\na\nn\n",  # Python, Python tools, No
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         # Should go directly to interactive mode
@@ -333,11 +344,11 @@ class TestBootstrapAutoDetect:
 
         # Test that --quick still works
         result = subprocess.run(
-            [str(script_path), "--quick"],
-            capture_output=True,
-            text=True,
-            timeout=60
+            [str(script_path), "--quick"], capture_output=True, text=True, timeout=60
         )
 
         # Should use quick mode
-        assert "Quick setup mode" in result.stderr or "quick setup" in result.stderr.lower()
+        assert (
+            "Quick setup mode" in result.stderr
+            or "quick setup" in result.stderr.lower()
+        )
