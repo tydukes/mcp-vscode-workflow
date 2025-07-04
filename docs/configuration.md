@@ -40,6 +40,32 @@ Use these variables in your prompts:
 2. Use template variables for dynamic content
 3. Follow the established prompt structure
 
+## AI Assistant Configuration
+
+### Session Summary Settings
+
+By default, the workspace is configured to disable automatic session summary creation. This prevents markdown files from being automatically generated after each AI assistant interaction.
+
+The following settings in `.vscode/settings.json` control this behavior:
+
+```json
+{
+  "github.copilot.chat.saveSession": false,
+  "github.copilot.chat.autoSaveSession": false,
+  "github.copilot.chat.createSessionSummary": false,
+  "github.copilot.chat.exportSessionSummary": false,
+  "chat.experimental.saveSession": false,
+  "chat.experimental.autoSaveSession": false,
+  "chat.experimental.createSessionSummary": false
+}
+```
+
+### Customizing AI Assistant Behavior
+
+- **Enable session summaries**: Set `createSessionSummary` to `true` if you want markdown summaries
+- **Auto-save sessions**: Set `autoSaveSession` to `true` to automatically save chat sessions
+- **Session export**: Configure `exportSessionSummary` to control summary file generation
+
 ## Script Configuration
 
 ### Environment Variables

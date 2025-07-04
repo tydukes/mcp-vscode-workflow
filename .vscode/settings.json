@@ -1,0 +1,10 @@
+{
+  "github.copilot.chat.saveSession": false,
+  "github.copilot.chat.autoSaveSession": false,
+  "github.copilot.chat.createSessionSummary": false,
+  "github.copilot.chat.exportSessionSummary": false,
+  "workbench.panel.chatSideBar.enabled": true,
+  "chat.experimental.saveSession": false,
+  "chat.experimental.autoSaveSession": false,
+  "chat.experimental.createSessionSummary": false
+}
