@@ -67,10 +67,16 @@ PROFILES:
   node      - Node.js development (node, npx)
 
 EXAMPLES:
+  $0                      # Auto-detect profile based on project structure (default)
   $0 --profile python     # Bootstrap Python development environment
   $0 --profile infra      # Bootstrap Infrastructure development environment
   $0 --interactive        # Launch interactive wizard with auto-detection
   $0 --quick              # Quick setup with Python profile (under 60 seconds)
+
+AUTO-DETECTION:
+  When no options are provided, the script will analyze your project structure
+  and suggest the most appropriate profile based on detected files and patterns.
+  You can accept the suggestion, choose a different profile, or use interactive mode.
 
 EOF
 }
@@ -168,7 +174,77 @@ detect_project_type() {
     echo "${detected_profiles[@]}"
 }
 
-
+# Function to show detection reasoning for each detected profile
+show_detection_reasoning() {
+    local workspace_root="$1"
+    shift
+    local detected_profiles=("$@")
+    
+    if [[ ${#detected_profiles[@]} -eq 0 ]]; then
+        echo -e "${YELLOW}No specific project indicators detected${NC}"
+        return 0
+    fi
+    
+    echo -e "${CYAN}=== Detection Reasoning ===${NC}"
+    echo
+    
+    for profile in "${detected_profiles[@]}"; do
+        echo -e "${GREEN}✓ $profile profile detected:${NC}"
+        case $profile in
+            python)
+                [[ -f "$workspace_root/requirements.txt" ]] && echo "  • Found requirements.txt"
+                [[ -f "$workspace_root/pyproject.toml" ]] && echo "  • Found pyproject.toml"
+                [[ -f "$workspace_root/setup.py" ]] && echo "  • Found setup.py"
+                [[ -f "$workspace_root/Pipfile" ]] && echo "  • Found Pipfile"
+                [[ -f "$workspace_root/poetry.lock" ]] && echo "  • Found poetry.lock"
+                [[ -d "$workspace_root/venv" ]] && echo "  • Found venv directory"
+                [[ -d "$workspace_root/.venv" ]] && echo "  • Found .venv directory"
+                [[ -n "$(find "$workspace_root" -name "*.py" -type f -not -path "*/.*" | head -1)" ]] && echo "  • Found Python (.py) source files"
+                ;;
+            infra)
+                [[ -f "$workspace_root/terraform.tf" ]] && echo "  • Found terraform.tf"
+                [[ -f "$workspace_root/main.tf" ]] && echo "  • Found main.tf"
+                [[ -f "$workspace_root/variables.tf" ]] && echo "  • Found variables.tf"
+                [[ -d "$workspace_root/terraform" ]] && echo "  • Found terraform directory"
+                [[ -d "$workspace_root/k8s" ]] && echo "  • Found k8s directory"
+                [[ -d "$workspace_root/kubernetes" ]] && echo "  • Found kubernetes directory"
+                [[ -d "$workspace_root/.terraform" ]] && echo "  • Found .terraform directory"
+                [[ -f "$workspace_root/ansible.cfg" ]] && echo "  • Found ansible.cfg"
+                [[ -f "$workspace_root/playbook.yml" ]] && echo "  • Found playbook.yml"
+                [[ -n "$(find "$workspace_root" -name "*.tf" -o -name "*.hcl" -type f -not -path "*/.*" | head -1)" ]] && echo "  • Found Terraform/HCL files"
+                ;;
+            docs)
+                [[ -f "$workspace_root/mkdocs.yml" ]] && echo "  • Found mkdocs.yml"
+                [[ -f "$workspace_root/conf.py" ]] && echo "  • Found conf.py (Sphinx)"
+                [[ -f "$workspace_root/sphinx.conf" ]] && echo "  • Found sphinx.conf"
+                [[ -d "$workspace_root/docs" ]] && echo "  • Found docs directory"
+                [[ -f "$workspace_root/README.md" ]] && echo "  • Found README.md"
+                [[ -n "$(find "$workspace_root" -name "*.md" -o -name "*.rst" -type f -not -path "*/.*" | head -1)" ]] && echo "  • Found documentation files (.md/.rst)"
+                ;;
+            cicd)
+                [[ -d "$workspace_root/.github/workflows" ]] && echo "  • Found .github/workflows directory"
+                [[ -f "$workspace_root/Jenkinsfile" ]] && echo "  • Found Jenkinsfile"
+                [[ -f "$workspace_root/.gitlab-ci.yml" ]] && echo "  • Found .gitlab-ci.yml"
+                [[ -f "$workspace_root/azure-pipelines.yml" ]] && echo "  • Found azure-pipelines.yml"
+                [[ -f "$workspace_root/docker-compose.yml" ]] && echo "  • Found docker-compose.yml"
+                [[ -f "$workspace_root/Dockerfile" ]] && echo "  • Found Dockerfile"
+                [[ -n "$(find "$workspace_root" -name "*.yml" -o -name "*.yaml" -type f -not -path "*/.*" -exec grep -l "workflow\|pipeline\|ci\|cd" {} + 2>/dev/null | head -1)" ]] && echo "  • Found CI/CD pipeline files"
+                ;;
+            node)
+                [[ -f "$workspace_root/package.json" ]] && echo "  • Found package.json"
+                [[ -f "$workspace_root/package-lock.json" ]] && echo "  • Found package-lock.json"
+                [[ -f "$workspace_root/yarn.lock" ]] && echo "  • Found yarn.lock"
+                [[ -f "$workspace_root/pnpm-lock.yaml" ]] && echo "  • Found pnpm-lock.yaml"
+                [[ -d "$workspace_root/node_modules" ]] && echo "  • Found node_modules directory"
+                [[ -n "$(find "$workspace_root" -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -type f -not -path "*/.*" -not -path "*/node_modules/*" | head -1)" ]] && echo "  • Found JavaScript/TypeScript source files"
+                ;;
+            bash)
+                [[ -n "$(find "$workspace_root" -name "*.sh" -o -name "*.bash" -type f -not -path "*/.*" | head -1)" ]] && echo "  • Found shell script files (.sh/.bash)"
+                ;;
+        esac
+        echo
+    done
+}
 
 # Function to show profile description
 show_profile_description() {
@@ -321,6 +397,132 @@ confirm_installation() {
     done
 }
 
+# Function to run auto-detect mode
+run_auto_detect_mode() {
+    local workspace_root="$1"
+    
+    echo >&2
+    log_info "Analyzing project structure..." >&2
+    echo >&2
+    
+    # Detect project type
+    local detected_profiles
+    detected_profiles=$(detect_project_type "$workspace_root")
+    read -ra detected_profiles_array <<< "$detected_profiles"
+    
+    # Show detection results
+    echo -e "${CYAN}=== Project Analysis ===${NC}" >&2
+    echo >&2
+    
+    # Show detection reasoning
+    show_detection_reasoning "$workspace_root" "${detected_profiles_array[@]}" >&2
+    
+    # Check if we have clear detection
+    if [[ ${#detected_profiles_array[@]} -eq 0 ]]; then
+        echo -e "${YELLOW}No specific project type detected.${NC}" >&2
+        echo -e "${BLUE}Falling back to interactive mode to determine your needs...${NC}" >&2
+        echo >&2
+        run_interactive_mode "$workspace_root"
+        return
+    fi
+    
+    # Calculate recommendation based on detection only (no user input)
+    local recommended_profile
+    recommended_profile=$(calculate_recommendation "unknown" "unknown" "${detected_profiles_array[@]}")
+    
+    # Determine confidence level
+    local confidence_level
+    if [[ ${#detected_profiles_array[@]} -eq 1 ]]; then
+        confidence_level="high"
+    elif [[ ${#detected_profiles_array[@]} -le 3 ]]; then
+        confidence_level="medium"
+    else
+        confidence_level="low"
+    fi
+    
+    # Show recommendation
+    echo -e "${GREEN}=== Recommendation ===${NC}" >&2
+    echo -e "${CYAN}Based on your project structure, we recommend: ${YELLOW}$recommended_profile${NC}" >&2
+    echo >&2
+    
+    # Show confidence level and detected alternatives
+    case $confidence_level in
+        high)
+            echo -e "${GREEN}Confidence: High${NC} (single profile type detected)" >&2
+            ;;
+        medium)
+            echo -e "${YELLOW}Confidence: Medium${NC} (multiple profile types detected: ${detected_profiles_array[*]})" >&2
+            ;;
+        low)
+            echo -e "${RED}Confidence: Low${NC} (many profile types detected)" >&2
+            echo -e "${BLUE}You might want to use interactive mode for better guidance${NC}" >&2
+            ;;
+    esac
+    echo >&2
+    
+    # Show installation preview
+    show_installation_preview "$recommended_profile" >&2
+    
+    # Ask user for confirmation or override
+    echo -e "${BLUE}Choose an option:${NC}" >&2
+    echo "  1) Accept recommendation ($recommended_profile)" >&2
+    echo "  2) Choose different profile" >&2
+    echo "  3) Use interactive mode for detailed guidance" >&2
+    echo "  4) Cancel" >&2
+    echo >&2
+    
+    while true; do
+        read -r -p "Your choice (1-4): " choice
+        case $choice in
+            1)
+                echo >&2
+                log_info "Proceeding with recommended profile: $recommended_profile" >&2
+                echo "$recommended_profile"
+                return
+                ;;
+            2)
+                echo >&2
+                echo -e "${BLUE}Available profiles:${NC}" >&2
+                echo "  a) python    - Python development" >&2
+                echo "  b) infra     - Infrastructure/DevOps" >&2
+                echo "  c) docs      - Documentation" >&2
+                echo "  d) cicd      - CI/CD pipelines" >&2
+                echo "  e) bash      - Shell scripting" >&2
+                echo "  f) node      - Node.js development" >&2
+                echo >&2
+                
+                while true; do
+                    read -r -p "Select profile (a-f): " profile_choice
+                    case $profile_choice in
+                        a|A) echo "python"; return;;
+                        b|B) echo "infra"; return;;
+                        c|C) echo "docs"; return;;
+                        d|D) echo "cicd"; return;;
+                        e|E) echo "bash"; return;;
+                        f|F) echo "node"; return;;
+                        *) echo "Please enter a valid option (a-f)" >&2;;
+                    esac
+                done
+                ;;
+            3)
+                echo >&2
+                log_info "Switching to interactive mode..." >&2
+                run_interactive_mode "$workspace_root"
+                return
+                ;;
+            4)
+                echo >&2
+                log_info "Operation cancelled by user" >&2
+                echo "CANCELLED"
+                return
+                ;;
+            *)
+                echo "Please enter a valid option (1-4)" >&2
+                ;;
+        esac
+    done
+}
+
 # Function to run interactive mode
 run_interactive_mode() {
     local workspace_root="$1"
@@ -417,7 +619,7 @@ run_interactive_mode() {
     if confirm_installation "$recommended_profile"; then
         echo "$recommended_profile"
     else
-        echo ""
+        return
     fi
 }
 
@@ -823,11 +1025,20 @@ main() {
             exit 0
         fi
     else
-        # Validate required arguments for non-interactive mode
+        # If no profile specified, use auto-detect mode
         if [[ -z "$profile" ]]; then
-            log_error "Profile is required (use --profile, --interactive, or --quick)"
-            show_usage
-            exit 1
+            if ! profile=$(run_auto_detect_mode "$workspace_root"); then
+                log_info "Auto-detect mode cancelled by user"
+                exit 0
+            fi
+            # Check if auto-detect was cancelled
+            if [[ "$profile" == "CANCELLED" ]]; then
+                log_info "Auto-detect mode cancelled by user"
+                exit 0
+            elif [[ -z "$profile" ]]; then
+                log_error "Auto-detect mode returned empty profile"
+                exit 1
+            fi
         fi
     fi
 
