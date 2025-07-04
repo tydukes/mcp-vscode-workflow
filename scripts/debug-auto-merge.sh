@@ -38,11 +38,11 @@ echo ""
 
 # Get PR details
 echo "📋 PR Details:"
-gh pr view $PR_NUMBER --json title,author,headRefName,baseRefName,state,mergeable,mergeStateStatus,reviewDecision,statusCheckRollup
+gh pr view "$PR_NUMBER" --json title,author,headRefName,baseRefName,state,mergeable,mergeStateStatus,reviewDecision,statusCheckRollup
 
 echo ""
 echo "📋 PR Title Check:"
-TITLE=$(gh pr view $PR_NUMBER --json title --jq '.title')
+TITLE=$(gh pr view "$PR_NUMBER" --json title --jq '.title')
 echo "Title: $TITLE"
 
 if [[ "$TITLE" == *"[auto-merge]"* ]]; then
