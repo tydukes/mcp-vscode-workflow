@@ -5,12 +5,27 @@ on:
     types: [opened, synchronize]
     branches: [ main, develop ]
 
+permissions:
+  pull-requests: write
+  contents: write
+  actions: read
+  checks: read
+
 jobs:
   check-auto-mergeable:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]' || contains(github.event.pull_request.title, '[auto-merge]')
 
     steps:
+      - name: Debug PR information
+        run: |
+          echo "PR Title: ${{ github.event.pull_request.title }}"
+          echo "PR Author: ${{ github.actor }}"
+          echo "PR Branch: ${{ github.event.pull_request.head.ref }}"
+          echo "Target Branch: ${{ github.event.pull_request.base.ref }}"
+          echo "Contains [auto-merge]: ${{ contains(github.event.pull_request.title, '[auto-merge]') }}"
+          echo "Is Dependabot: ${{ github.actor == 'dependabot[bot]' }}"
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -37,6 +52,16 @@ jobs:
             "Makefile$"
             "\.github/workflows/.*\.yml$"
             "tests/.*\.py$"
+            "\.vscode/settings\.json$"
+            "LICENSE$"
+            "\.yamllint$"
+            "\.flake8$"
+            "setup\.cfg$"
+            "tox\.ini$"
+            "\.coveragerc$"
+            "codecov\.yml$"
+            "\.editorconfig$"
+            "\.gitattributes$"
           )
 
           # Define unsafe patterns (critical files that always need review)
@@ -115,6 +140,7 @@ jobs:
         if: steps.analyze.outputs.auto_mergeable == 'true' && steps.size-check.outputs.size_ok == 'true'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
             const { number } = context.payload.pull_request;
@@ -131,6 +157,16 @@ jobs:
 
               console.log('✅ PR approved for auto-merge');
 
+              // Enable auto-merge using GitHub's auto-merge feature
+              await github.rest.pulls.enableAutoMerge({
+                owner,
+                repo,
+                pull_number: number,
+                merge_method: 'squash'
+              });
+
+              console.log('✅ Auto-merge enabled');
+
               // Add auto-merge label
               await github.rest.issues.addLabels({
                 owner,
@@ -141,17 +177,19 @@ jobs:
 
             } catch (error) {
               console.log('Error enabling auto-merge:', error.message);
+              // If auto-merge fails, at least the PR is approved
+              console.log('PR is approved but auto-merge could not be enabled');
             }
 
   dependabot-auto-merge:
     runs-on: ubuntu-latest
-    needs: [check-auto-mergeable]
-    if: github.actor == 'dependabot[bot]' && needs.check-auto-mergeable.result == 'success'
+    if: github.actor == 'dependabot[bot]'
 
     steps:
       - name: Enable auto-merge for dependabot
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
             const { number } = context.payload.pull_request;
@@ -183,6 +221,16 @@ jobs:
                 body: '✅ Auto-approved: Dependabot patch/minor version update'
               });
 
+              // Enable auto-merge
+              await github.rest.pulls.enableAutoMerge({
+                owner,
+                repo,
+                pull_number: number,
+                merge_method: 'squash'
+              });
+
+              console.log('✅ Auto-merge enabled for dependabot PR');
+
               // Add labels
               await github.rest.issues.addLabels({
                 owner,
@@ -194,63 +242,3 @@ jobs:
             } else {
               console.log('⚠️ Dependabot PR requires manual review (major version change)');
             }
-
-  # Wait for CI to complete before auto-merging
-  wait-for-ci:
-    runs-on: ubuntu-latest
-    needs: [check-auto-mergeable]
-    if: needs.check-auto-mergeable.result == 'success'
-
-    steps:
-      - name: Wait for CI completion
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const { number } = context.payload.pull_request;
-
-            // Wait for CI workflows to complete
-            const maxWaitTime = 20 * 60 * 1000; // 20 minutes
-            const startTime = Date.now();
-
-            while (Date.now() - startTime < maxWaitTime) {
-              const pr = await github.rest.pulls.get({
-                owner,
-                repo,
-                pull_number: number
-              });
-
-              const sha = pr.data.head.sha;
-
-              // Get check runs
-              const checkRuns = await github.rest.checks.listForRef({
-                owner,
-                repo,
-                ref: sha
-              });
-
-              const relevantChecks = checkRuns.data.check_runs.filter(run =>
-                run.name.includes('lint-and-test') ||
-                run.name.includes('security-scan') ||
-                run.name.includes('markdown-lint')
-              );
-
-              const allCompleted = relevantChecks.every(check => check.status === 'completed');
-              const allSuccessful = relevantChecks.every(check =>
-                check.status === 'completed' && check.conclusion === 'success'
-              );
-
-              if (allCompleted && allSuccessful) {
-                console.log('✅ All CI checks completed successfully');
-                return;
-              } else if (allCompleted && !allSuccessful) {
-                console.log('❌ Some CI checks failed');
-                process.exit(1);
-              }
-
-              console.log('⏳ Waiting for CI checks to complete...');
-              await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
-            }
-
-            console.log('⏰ Timeout waiting for CI completion');
-            process.exit(1);

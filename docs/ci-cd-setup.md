@@ -53,18 +53,50 @@ This project implements a comprehensive CI/CD pipeline using GitHub Actions and 
 
 #### Auto-merge (`.github/workflows/auto-merge.yml`)
 
-**Purpose:** Automatically approves and merges safe changes.
+**Purpose:** Automatically approves and merges safe changes using GitHub's auto-merge feature.
 
 **Safe Change Criteria:**
 - Documentation updates (`.md` files)
-- Configuration files (`pyproject.toml`, `.gitignore`, etc.)
+- Configuration files (`pyproject.toml`, `.gitignore`, `.vscode/settings.json`, etc.)
 - Test files
 - Non-critical workflow files
+- License and editor configuration files
 - Small size (≤10 files, ≤200 lines)
 
 **Auto-merge Triggers:**
 - Dependabot PRs for patch/minor updates
 - PRs with `[auto-merge]` in title (if changes are safe)
+
+**Required Permissions:**
+- `pull-requests: write` - to approve PRs
+- `contents: write` - to enable auto-merge
+- `actions: read` and `checks: read` - to check CI status
+
+## Repository Settings for Auto-Merge
+
+For auto-merge to work properly, ensure these GitHub repository settings are configured:
+
+### Required Settings
+1. **General > Pull Requests**:
+   - ✅ Allow auto-merge
+   - ✅ Allow squash merging
+   - ✅ Automatically delete head branches
+
+2. **Branches > Branch protection rules** (for `main` branch):
+   - ✅ Require status checks to pass before merging
+   - ✅ Require branches to be up to date before merging
+   - ✅ Include CI workflow checks: `lint-and-test`, `enforce-requirements`
+
+3. **Actions > General**:
+   - ✅ Read and write permissions for `GITHUB_TOKEN`
+   - ✅ Allow GitHub Actions to create and approve pull requests
+
+### Status Check Configuration
+Required status checks for auto-merge:
+- `lint-and-test` (from CI workflow)
+- `enforce-requirements` (from branch protection workflow)
+
+Without these settings, auto-merge will be skipped even if the workflow runs successfully.
 
 ### 2. Pre-commit Hooks (`.pre-commit-config.yaml`)
 
@@ -201,18 +233,27 @@ make bootstrap-python  # or other profiles
    - No merge conflicts
    - Reasonable size (< 50 files, < 1000 lines for manual review)
 
-### Auto-merge Criteria
+### Auto-merge Troubleshooting
 
-Changes that qualify for auto-merge:
-- Documentation updates
-- Test additions/updates
-- Configuration tweaks
-- Dependency updates (patch/minor)
-- Pre-commit hook updates
+**Common reasons auto-merge is skipped:**
 
-To request auto-merge for safe changes:
+1. **Missing trigger condition**: PR title must contain `[auto-merge]` or be from `dependabot[bot]`
+2. **Repository settings**: Auto-merge must be enabled in repository settings
+3. **Branch protection**: Required status checks must be configured properly
+4. **File patterns**: Changed files must match safe patterns only
+5. **Size limits**: Changes must be ≤10 files and ≤200 lines
+6. **Token permissions**: Workflow must have proper GitHub token permissions
+
+**To debug auto-merge issues:**
 ```bash
-git commit -m "docs: update API documentation [auto-merge]"
+# Check workflow run logs in GitHub Actions
+# Look for "Debug PR information" step output
+# Verify trigger conditions are met
+```
+
+**Manual auto-merge request:**
+```bash
+git commit -m "docs: update configuration guide [auto-merge]"
 ```
 
 ## Troubleshooting
