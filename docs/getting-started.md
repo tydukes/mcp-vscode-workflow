@@ -45,6 +45,15 @@ Use the prompt templates in `.mcp/prompts/` for:
 - Bug analysis
 - And more...
 
+## Default Settings
+
+The workspace is preconfigured with settings that:
+- **Disable automatic session summaries** - No markdown files are created after AI assistant sessions
+- **Optimize profile-specific workflows** - Each profile has tailored settings and extensions
+- **Enable MCP integrations** - AI assistants are connected to relevant development tools
+
+You can customize these settings in `.vscode/settings.json` or through the VS Code preferences.
+
 ## Next Steps
 
 - [Configuration Guide](configuration.md)
