@@ -54,7 +54,7 @@ fi
 
 echo ""
 echo "📋 Changed Files:"
-gh pr view $PR_NUMBER --json files --jq '.files[].path'
+gh pr view "$PR_NUMBER" --json files --jq '.files[].path'
 
 echo ""
 echo "📋 Workflow Runs:"
@@ -74,6 +74,6 @@ echo "5. Ensure changed files match safe patterns"
 echo ""
 
 echo "💡 To enable auto-merge manually:"
-echo "   gh pr edit $PR_NUMBER --title \"$TITLE [auto-merge]\""
+echo "   gh pr edit \"$PR_NUMBER\" --title \"$TITLE [auto-merge]\""
 echo ""
 echo "=== END DEBUG ==="
