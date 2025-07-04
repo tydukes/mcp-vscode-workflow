@@ -78,6 +78,12 @@ validate_profile() {
     local profile="$1"
     local valid_profiles=("bash" "cicd" "docs" "infra" "python" "node")
 
+    # Handle empty profile
+    if [[ -z "$profile" ]]; then
+        log_error "Profile cannot be empty"
+        return 1
+    fi
+
     for valid_profile in "${valid_profiles[@]}"; do
         if [[ "$profile" == "$valid_profile" ]]; then
             return 0
@@ -160,118 +166,7 @@ detect_project_type() {
     echo "${detected_profiles[@]}"
 }
 
-# Function to ask user questions and determine preferences
-ask_user_questions() {
-    local detected_profiles=("$@")
-    echo
-    echo -e "${CYAN}=== Interactive Bootstrap Wizard ===${NC}"
-    echo
-    
-    if [[ ${#detected_profiles[@]} -gt 0 ]]; then
-        echo -e "${GREEN}✓ Auto-detected project types:${NC}"
-        for profile in "${detected_profiles[@]}"; do
-            echo "  • $profile"
-        done
-        echo
-    else
-        echo -e "${YELLOW}No specific project type detected. Let's determine your needs!${NC}"
-        echo
-    fi
-    
-    echo "Please answer a few questions to help us recommend the best profile:"
-    echo
-    
-    # Question 1: Primary development activity
-    echo -e "${BLUE}1. What is your primary development activity?${NC}"
-    echo "   a) Writing Python code (web apps, data science, APIs)"
-    echo "   b) Managing infrastructure (Terraform, Kubernetes, cloud)"
-    echo "   c) Writing documentation (markdown, technical writing)"
-    echo "   d) CI/CD pipelines and DevOps automation"
-    echo "   e) Shell scripting and system administration"
-    echo "   f) JavaScript/TypeScript development"
-    echo
-    while true; do
-        read -p "Your choice (a/b/c/d/e/f): " primary_activity
-        case $primary_activity in
-            a|A) primary_activity="python"; break;;
-            b|B) primary_activity="infra"; break;;
-            c|C) primary_activity="docs"; break;;
-            d|D) primary_activity="cicd"; break;;
-            e|E) primary_activity="bash"; break;;
-            f|F) primary_activity="node"; break;;
-            *) echo "Please enter a valid option (a-f)";;
-        esac
-    done
-    
-    # Question 2: Tools preference
-    echo
-    echo -e "${BLUE}2. Which tools do you expect to use most?${NC}"
-    echo "   a) Python, pip, virtual environments, pytest"
-    echo "   b) Terraform, Docker, kubectl, cloud CLIs"
-    echo "   c) Markdown editors, documentation generators"
-    echo "   d) Docker, YAML, pipeline tools"
-    echo "   e) Bash, shellcheck, system utilities"
-    echo "   f) Node.js, npm, webpack, testing frameworks"
-    echo
-    while true; do
-        read -p "Your choice (a/b/c/d/e/f): " tools_preference
-        case $tools_preference in
-            a|A) tools_preference="python"; break;;
-            b|B) tools_preference="infra"; break;;
-            c|C) tools_preference="docs"; break;;
-            d|D) tools_preference="cicd"; break;;
-            e|E) tools_preference="bash"; break;;
-            f|F) tools_preference="node"; break;;
-            *) echo "Please enter a valid option (a-f)";;
-        esac
-    done
-    
-    # Return the user's preferences
-    echo "$primary_activity|$tools_preference"
-}
 
-# Function to recommend profile based on detection and user input
-recommend_profile() {
-    local detected_profiles=("$@")
-    
-    # Get user preferences
-    local user_input
-    user_input=$(ask_user_questions "${detected_profiles[@]}")
-    local primary_activity
-    local tools_preference
-    primary_activity=$(echo "$user_input" | cut -d'|' -f1)
-    tools_preference=$(echo "$user_input" | cut -d'|' -f2)
-    
-    # Score each profile
-    declare -A profile_scores
-    profile_scores["python"]=0
-    profile_scores["infra"]=0
-    profile_scores["docs"]=0
-    profile_scores["cicd"]=0
-    profile_scores["bash"]=0
-    profile_scores["node"]=0
-    
-    # Add points for detected project types
-    for profile in "${detected_profiles[@]}"; do
-        ((profile_scores["$profile"] += 3))
-    done
-    
-    # Add points for user preferences
-    ((profile_scores["$primary_activity"] += 2))
-    ((profile_scores["$tools_preference"] += 1))
-    
-    # Find the highest scoring profile
-    local recommended_profile=""
-    local max_score=0
-    for profile in "${!profile_scores[@]}"; do
-        if [[ ${profile_scores[$profile]} -gt $max_score ]]; then
-            max_score=${profile_scores[$profile]}
-            recommended_profile="$profile"
-        fi
-    done
-    
-    echo "$recommended_profile"
-}
 
 # Function to show profile description
 show_profile_description() {
@@ -437,9 +332,75 @@ run_interactive_mode() {
     detected_profiles=$(detect_project_type "$workspace_root")
     read -ra detected_profiles_array <<< "$detected_profiles"
     
-    # Get recommendation
+    # Show detected profiles
+    echo -e "${CYAN}=== Interactive Bootstrap Wizard ===${NC}"
+    echo
+    
+    if [[ ${#detected_profiles_array[@]} -gt 0 ]]; then
+        echo -e "${GREEN}✓ Auto-detected project types:${NC}"
+        for profile in "${detected_profiles_array[@]}"; do
+            echo "  • $profile"
+        done
+        echo
+    else
+        echo -e "${YELLOW}No specific project type detected. Let's determine your needs!${NC}"
+        echo
+    fi
+    
+    # Ask user questions
+    echo "Please answer a few questions to help us recommend the best profile:"
+    echo
+    
+    # Question 1: Primary development activity
+    echo -e "${BLUE}1. What is your primary development activity?${NC}"
+    echo "   a) Writing Python code (web apps, data science, APIs)"
+    echo "   b) Managing infrastructure (Terraform, Kubernetes, cloud)"
+    echo "   c) Writing documentation (markdown, technical writing)"
+    echo "   d) CI/CD pipelines and DevOps automation"
+    echo "   e) Shell scripting and system administration"
+    echo "   f) JavaScript/TypeScript development"
+    echo
+    local primary_activity
+    while true; do
+        read -p "Your choice (a/b/c/d/e/f): " primary_activity
+        case $primary_activity in
+            a|A) primary_activity="python"; break;;
+            b|B) primary_activity="infra"; break;;
+            c|C) primary_activity="docs"; break;;
+            d|D) primary_activity="cicd"; break;;
+            e|E) primary_activity="bash"; break;;
+            f|F) primary_activity="node"; break;;
+            *) echo "Please enter a valid option (a-f)";;
+        esac
+    done
+    
+    # Question 2: Tools preference
+    echo
+    echo -e "${BLUE}2. Which tools do you expect to use most?${NC}"
+    echo "   a) Python, pip, virtual environments, pytest"
+    echo "   b) Terraform, Docker, kubectl, cloud CLIs"
+    echo "   c) Markdown editors, documentation generators"
+    echo "   d) Docker, YAML, pipeline tools"
+    echo "   e) Bash, shellcheck, system utilities"
+    echo "   f) Node.js, npm, webpack, testing frameworks"
+    echo
+    local tools_preference
+    while true; do
+        read -p "Your choice (a/b/c/d/e/f): " tools_preference
+        case $tools_preference in
+            a|A) tools_preference="python"; break;;
+            b|B) tools_preference="infra"; break;;
+            c|C) tools_preference="docs"; break;;
+            d|D) tools_preference="cicd"; break;;
+            e|E) tools_preference="bash"; break;;
+            f|F) tools_preference="node"; break;;
+            *) echo "Please enter a valid option (a-f)";;
+        esac
+    done
+    
+    # Calculate recommendation
     local recommended_profile
-    recommended_profile=$(recommend_profile "${detected_profiles_array[@]}")
+    recommended_profile=$(calculate_recommendation "$primary_activity" "$tools_preference" "${detected_profiles_array[@]}")
     
     # Show recommendation
     echo
@@ -454,8 +415,61 @@ run_interactive_mode() {
     if confirm_installation "$recommended_profile"; then
         echo "$recommended_profile"
     else
-        exit 0
+        echo ""
     fi
+}
+
+# Function to calculate recommendation based on inputs
+calculate_recommendation() {
+    local primary_activity="$1"
+    local tools_preference="$2"
+    shift 2
+    local detected_profiles=("$@")
+    
+    # Score each profile
+    declare -A profile_scores
+    profile_scores["python"]=0
+    profile_scores["infra"]=0
+    profile_scores["docs"]=0
+    profile_scores["cicd"]=0
+    profile_scores["bash"]=0
+    profile_scores["node"]=0
+    
+    # Add points for detected project types
+    for profile in "${detected_profiles[@]}"; do
+        if [[ -n "${profile_scores[$profile]:-}" ]]; then
+            ((profile_scores["$profile"] += 3))
+        fi
+    done
+    
+    # Add points for user preferences
+    if [[ -n "${profile_scores[$primary_activity]:-}" ]]; then
+        ((profile_scores["$primary_activity"] += 2))
+    fi
+    if [[ -n "${profile_scores[$tools_preference]:-}" ]]; then
+        ((profile_scores["$tools_preference"] += 1))
+    fi
+    
+    # Find the highest scoring profile
+    local recommended_profile=""
+    local max_score=0
+    for profile in "${!profile_scores[@]}"; do
+        if [[ ${profile_scores[$profile]} -gt $max_score ]]; then
+            max_score=${profile_scores[$profile]}
+            recommended_profile="$profile"
+        fi
+    done
+    
+    # If no profile scored, default to the first detected profile or python
+    if [[ -z "$recommended_profile" ]]; then
+        if [[ ${#detected_profiles[@]} -gt 0 ]]; then
+            recommended_profile="${detected_profiles[0]}"
+        else
+            recommended_profile="python"
+        fi
+    fi
+    
+    echo "$recommended_profile"
 }
 
 # Function to get the script directory
@@ -651,8 +665,8 @@ main() {
         
         profile=$(run_interactive_mode "$workspace_root")
         if [[ -z "$profile" ]]; then
-            log_error "Interactive mode failed to determine profile"
-            exit 1
+            log_info "Interactive mode cancelled by user"
+            exit 0
         fi
     else
         # Validate required arguments for non-interactive mode
