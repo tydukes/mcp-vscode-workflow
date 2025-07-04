@@ -99,7 +99,7 @@ validate_profile() {
 detect_project_type() {
     local workspace_root="$1"
     local detected_profiles=()
-    
+
     # Check for Python project indicators
     if [[ -f "$workspace_root/requirements.txt" ]] || \
        [[ -f "$workspace_root/pyproject.toml" ]] || \
@@ -111,7 +111,7 @@ detect_project_type() {
        [[ -n "$(find "$workspace_root" -name "*.py" -type f -not -path "*/.*" | head -1)" ]]; then
         detected_profiles+=("python")
     fi
-    
+
     # Check for Infrastructure project indicators
     if [[ -f "$workspace_root/terraform.tf" ]] || \
        [[ -f "$workspace_root/main.tf" ]] || \
@@ -125,7 +125,7 @@ detect_project_type() {
        [[ -n "$(find "$workspace_root" -name "*.tf" -o -name "*.hcl" -type f -not -path "*/.*" | head -1)" ]]; then
         detected_profiles+=("infra")
     fi
-    
+
     # Check for Documentation project indicators
     if [[ -f "$workspace_root/mkdocs.yml" ]] || \
        [[ -f "$workspace_root/conf.py" ]] || \
@@ -135,7 +135,7 @@ detect_project_type() {
        [[ -n "$(find "$workspace_root" -name "*.md" -o -name "*.rst" -type f -not -path "*/.*" | head -1)" ]]; then
         detected_profiles+=("docs")
     fi
-    
+
     # Check for CI/CD project indicators
     if [[ -d "$workspace_root/.github/workflows" ]] || \
        [[ -f "$workspace_root/Jenkinsfile" ]] || \
@@ -143,10 +143,10 @@ detect_project_type() {
        [[ -f "$workspace_root/azure-pipelines.yml" ]] || \
        [[ -f "$workspace_root/docker-compose.yml" ]] || \
        [[ -f "$workspace_root/Dockerfile" ]] || \
-       [[ -n "$(find "$workspace_root" -name "*.yml" -o -name "*.yaml" -type f -not -path "*/.*" | xargs grep -l "workflow\|pipeline\|ci\|cd" 2>/dev/null | head -1)" ]]; then
+       [[ -n "$(find "$workspace_root" -name "*.yml" -o -name "*.yaml" -type f -not -path "*/.*" -exec grep -l "workflow\|pipeline\|ci\|cd" {} + 2>/dev/null | head -1)" ]]; then
         detected_profiles+=("cicd")
     fi
-    
+
     # Check for Node.js project indicators
     if [[ -f "$workspace_root/package.json" ]] || \
        [[ -f "$workspace_root/package-lock.json" ]] || \
@@ -156,12 +156,12 @@ detect_project_type() {
        [[ -n "$(find "$workspace_root" -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -type f -not -path "*/.*" -not -path "*/node_modules/*" | head -1)" ]]; then
         detected_profiles+=("node")
     fi
-    
+
     # Check for Bash/Shell project indicators
     if [[ -n "$(find "$workspace_root" -name "*.sh" -o -name "*.bash" -type f -not -path "*/.*" | head -1)" ]]; then
         detected_profiles+=("bash")
     fi
-    
+
     # Return the detected profiles
     echo "${detected_profiles[@]}"
 }
@@ -171,7 +171,7 @@ detect_project_type() {
 # Function to show profile description
 show_profile_description() {
     local profile="$1"
-    
+
     case $profile in
         python)
             echo "Python Development Profile - Full-stack Python development with testing, debugging, and deployment support"
@@ -221,7 +221,7 @@ show_profile_description() {
 # Function to show installation preview
 show_installation_preview() {
     local profile="$1"
-    
+
     echo
     echo -e "${CYAN}=== Installation Preview ===${NC}"
     echo
@@ -230,7 +230,7 @@ show_installation_preview() {
     show_profile_description "$profile"
     echo
     echo -e "${BLUE}Tools and configurations that will be installed/configured:${NC}"
-    
+
     case $profile in
         python)
             echo "  • Python extension pack for VS Code"
@@ -277,7 +277,7 @@ show_installation_preview() {
             echo "  • MCP servers for JavaScript development"
             ;;
     esac
-    
+
     echo
     echo -e "${BLUE}VS Code Profile:${NC}"
     echo "  • Custom settings optimized for $profile development"
@@ -290,7 +290,7 @@ show_installation_preview() {
 # Function to confirm installation
 confirm_installation() {
     local profile="$1"
-    
+
     echo -e "${YELLOW}Do you want to proceed with the $profile profile installation?${NC}"
     echo "This will:"
     echo "  • Validate required tools"
@@ -298,11 +298,11 @@ confirm_installation() {
     echo "  • Configure VS Code for $profile development"
     echo "  • Launch the development environment"
     echo
-    
+
     while true; do
-        read -p "Continue? (y/n): " confirm
+        read -r -p "Continue? (y/n): " confirm
         case $confirm in
-            y|Y|yes|YES) 
+            y|Y|yes|YES)
                 echo
                 log_info "Starting installation for $profile profile..."
                 return 0
@@ -322,20 +322,20 @@ confirm_installation() {
 # Function to run interactive mode
 run_interactive_mode() {
     local workspace_root="$1"
-    
+
     echo
     log_info "Starting interactive mode..."
     echo
-    
+
     # Detect project type
     local detected_profiles
     detected_profiles=$(detect_project_type "$workspace_root")
     read -ra detected_profiles_array <<< "$detected_profiles"
-    
+
     # Show detected profiles
     echo -e "${CYAN}=== Interactive Bootstrap Wizard ===${NC}"
     echo
-    
+
     if [[ ${#detected_profiles_array[@]} -gt 0 ]]; then
         echo -e "${GREEN}✓ Auto-detected project types:${NC}"
         for profile in "${detected_profiles_array[@]}"; do
@@ -346,11 +346,11 @@ run_interactive_mode() {
         echo -e "${YELLOW}No specific project type detected. Let's determine your needs!${NC}"
         echo
     fi
-    
+
     # Ask user questions
     echo "Please answer a few questions to help us recommend the best profile:"
     echo
-    
+
     # Question 1: Primary development activity
     echo -e "${BLUE}1. What is your primary development activity?${NC}"
     echo "   a) Writing Python code (web apps, data science, APIs)"
@@ -362,7 +362,7 @@ run_interactive_mode() {
     echo
     local primary_activity
     while true; do
-        read -p "Your choice (a/b/c/d/e/f): " primary_activity
+        read -r -p "Your choice (a/b/c/d/e/f): " primary_activity
         case $primary_activity in
             a|A) primary_activity="python"; break;;
             b|B) primary_activity="infra"; break;;
@@ -373,7 +373,7 @@ run_interactive_mode() {
             *) echo "Please enter a valid option (a-f)";;
         esac
     done
-    
+
     # Question 2: Tools preference
     echo
     echo -e "${BLUE}2. Which tools do you expect to use most?${NC}"
@@ -386,7 +386,7 @@ run_interactive_mode() {
     echo
     local tools_preference
     while true; do
-        read -p "Your choice (a/b/c/d/e/f): " tools_preference
+        read -r -p "Your choice (a/b/c/d/e/f): " tools_preference
         case $tools_preference in
             a|A) tools_preference="python"; break;;
             b|B) tools_preference="infra"; break;;
@@ -397,20 +397,20 @@ run_interactive_mode() {
             *) echo "Please enter a valid option (a-f)";;
         esac
     done
-    
+
     # Calculate recommendation
     local recommended_profile
     recommended_profile=$(calculate_recommendation "$primary_activity" "$tools_preference" "${detected_profiles_array[@]}")
-    
+
     # Show recommendation
     echo
     echo -e "${GREEN}=== Recommendation ===${NC}"
     echo -e "${CYAN}Based on your project and preferences, we recommend: ${YELLOW}$recommended_profile${NC}"
     echo
-    
+
     # Show installation preview
     show_installation_preview "$recommended_profile"
-    
+
     # Confirm installation
     if confirm_installation "$recommended_profile"; then
         echo "$recommended_profile"
@@ -425,7 +425,7 @@ calculate_recommendation() {
     local tools_preference="$2"
     shift 2
     local detected_profiles=("$@")
-    
+
     # Score each profile
     declare -A profile_scores
     profile_scores["python"]=0
@@ -434,14 +434,14 @@ calculate_recommendation() {
     profile_scores["cicd"]=0
     profile_scores["bash"]=0
     profile_scores["node"]=0
-    
+
     # Add points for detected project types
     for profile in "${detected_profiles[@]}"; do
         if [[ -n "${profile_scores[$profile]:-}" ]]; then
             ((profile_scores["$profile"] += 3))
         fi
     done
-    
+
     # Add points for user preferences
     if [[ -n "${profile_scores[$primary_activity]:-}" ]]; then
         ((profile_scores["$primary_activity"] += 2))
@@ -449,7 +449,7 @@ calculate_recommendation() {
     if [[ -n "${profile_scores[$tools_preference]:-}" ]]; then
         ((profile_scores["$tools_preference"] += 1))
     fi
-    
+
     # Find the highest scoring profile
     local recommended_profile=""
     local max_score=0
@@ -459,7 +459,7 @@ calculate_recommendation() {
             recommended_profile="$profile"
         fi
     done
-    
+
     # If no profile scored, default to the first detected profile or python
     if [[ -z "$recommended_profile" ]]; then
         if [[ ${#detected_profiles[@]} -gt 0 ]]; then
@@ -468,7 +468,7 @@ calculate_recommendation() {
             recommended_profile="python"
         fi
     fi
-    
+
     echo "$recommended_profile"
 }
 
@@ -662,7 +662,7 @@ main() {
             show_usage
             exit 1
         fi
-        
+
         profile=$(run_interactive_mode "$workspace_root")
         if [[ -z "$profile" ]]; then
             log_info "Interactive mode cancelled by user"
