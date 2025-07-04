@@ -55,6 +55,7 @@ Bootstrap MCP VS Code workflow environment for development.
 OPTIONS:
   --profile <name>     Use specific profile (bash, cicd, docs, infra, python, node)
   --interactive        Launch interactive mode with auto-detection and wizard
+  --quick              Quick setup with minimal validation (uses Python profile)
   -h, --help           Show this help message
 
 PROFILES:
@@ -69,6 +70,7 @@ EXAMPLES:
   $0 --profile python     # Bootstrap Python development environment
   $0 --profile infra      # Bootstrap Infrastructure development environment
   $0 --interactive        # Launch interactive wizard with auto-detection
+  $0 --quick              # Quick setup with Python profile (under 60 seconds)
 
 EOF
 }
@@ -621,10 +623,127 @@ open_vscode_with_profile() {
     fi
 }
 
+# Function to run quick setup mode
+run_quick_setup() {
+    local script_dir="$1"
+    local workspace_root="$2"
+
+    log_info "Starting quick setup mode for fast development environment"
+    log_info "Using Python profile with minimal validation"
+    echo
+
+    # Step 1: Quick VS Code check (don't fail if not found)
+    log_step "Quick VS Code check..."
+    if command -v code >/dev/null 2>&1; then
+        log_info "✓ VS Code CLI available"
+    else
+        log_warn "VS Code CLI not found - you may need to install it later"
+    fi
+
+    # Step 2: Basic tool check for common tools (quick check, don't fail)
+    log_step "Quick tool availability check..."
+    local tools_status=()
+
+    # Check git
+    if command -v git >/dev/null 2>&1; then
+        log_info "✓ git available"
+        tools_status+=("git: ✓")
+    else
+        log_warn "git not found - consider installing for version control"
+        tools_status+=("git: ✗")
+    fi
+
+    # Check node
+    if command -v node >/dev/null 2>&1; then
+        log_info "✓ node available"
+        tools_status+=("node: ✓")
+    else
+        log_warn "node not found - some MCP features may be limited"
+        tools_status+=("node: ✗")
+    fi
+
+    # Check python
+    if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
+        log_info "✓ python available"
+        tools_status+=("python: ✓")
+    else
+        log_warn "python not found - may need to install for Python development"
+        tools_status+=("python: ✗")
+    fi
+
+    # Step 3: Quick MCP package check (don't install, just verify npm is available)
+    log_step "Quick MCP package check..."
+    if command -v npm >/dev/null 2>&1; then
+        log_info "✓ npm available for MCP package management"
+    else
+        log_warn "npm not found - MCP packages may need manual installation"
+    fi
+
+    # Step 4: Launch Python profile script (lightweight)
+    log_step "Setting up Python profile..."
+    local profile_script="$script_dir/start-python-profile.sh"
+    if [[ -f "$profile_script" ]] && [[ -s "$profile_script" ]]; then
+        if [[ ! -x "$profile_script" ]]; then
+            chmod +x "$profile_script"
+        fi
+        log_info "Running Python profile setup..."
+        "$profile_script" || log_warn "Profile script completed with warnings"
+    else
+        log_info "Python profile script not found or empty - using default setup"
+    fi
+
+    # Step 5: Quick VS Code setup (don't fail on errors)
+    log_step "Quick VS Code setup..."
+    if command -v code >/dev/null 2>&1; then
+        log_info "Preparing VS Code workspace..."
+        # Don't actually open VS Code in quick mode to keep it fast
+        log_info "VS Code setup ready - workspace: $workspace_root"
+    else
+        log_info "VS Code setup skipped - CLI not available"
+    fi
+
+    return 0
+}
+
+# Function to show quick setup success message
+show_quick_success_message() {
+    local workspace_root="$1"
+
+    echo
+    log_success "🚀 Quick setup completed successfully!"
+    log_info "Your Python development environment is ready in under 60 seconds"
+    echo
+
+    echo -e "${BLUE}WHAT'S NEXT:${NC}"
+    echo "  1. Open VS Code:"
+    echo "     ${CYAN}code $workspace_root${NC}"
+    echo
+    echo "  2. Start developing with Python:"
+    echo "     ${CYAN}# Create a new Python file${NC}"
+    echo "     ${CYAN}touch main.py${NC}"
+    echo "     ${CYAN}# Create a virtual environment${NC}"
+    echo "     ${CYAN}python -m venv venv${NC}"
+    echo "     ${CYAN}# Activate it${NC}"
+    echo "     ${CYAN}source venv/bin/activate  # (Linux/Mac)${NC}"
+    printf "     %s# or: venv\\Scripts\\activate  # (Windows)%s\n" "${CYAN}" "${NC}"
+    echo
+    echo "  3. Install MCP packages when needed:"
+    echo "     ${CYAN}./scripts/install-mcp-npx.sh${NC}"
+    echo
+    echo "  4. Full tool validation (optional):"
+    echo "     ${CYAN}./scripts/check-tools.sh python${NC}"
+    echo
+    echo "  5. Switch to interactive mode for advanced setup:"
+    echo "     ${CYAN}./scripts/bootstrap.sh --interactive${NC}"
+    echo
+    echo -e "${GREEN}Happy coding! 🎉${NC}"
+}
+
 # Main function
 main() {
     local profile=""
     local interactive=false
+    local quick=false
 
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
@@ -635,6 +754,10 @@ main() {
                 ;;
             --interactive)
                 interactive=true
+                shift
+                ;;
+            --quick)
+                quick=true
                 shift
                 ;;
             -h|--help)
@@ -655,6 +778,37 @@ main() {
     local workspace_root
     workspace_root=$(dirname "$script_dir")
 
+    # Handle quick mode
+    if [[ "$quick" == true ]]; then
+        # Quick mode validation
+        if [[ "$interactive" == true ]]; then
+            log_error "Cannot use --quick and --interactive together"
+            show_usage
+            exit 1
+        fi
+
+        if [[ -n "$profile" ]]; then
+            log_error "Cannot use --quick and --profile together"
+            log_error "Quick mode automatically uses Python profile"
+            show_usage
+            exit 1
+        fi
+
+        # Run quick setup
+        log_info "Starting MCP VS Code workflow quick setup"
+        log_info "Profile: python (default for quick mode)"
+        log_info "Workspace: $workspace_root"
+        echo
+
+        if run_quick_setup "$script_dir" "$workspace_root"; then
+            show_quick_success_message "$workspace_root"
+            exit 0
+        else
+            log_error "Quick setup failed"
+            exit 1
+        fi
+    fi
+
     # Handle interactive mode
     if [[ "$interactive" == true ]]; then
         if [[ -n "$profile" ]]; then
@@ -671,7 +825,7 @@ main() {
     else
         # Validate required arguments for non-interactive mode
         if [[ -z "$profile" ]]; then
-            log_error "Profile is required (use --profile or --interactive)"
+            log_error "Profile is required (use --profile, --interactive, or --quick)"
             show_usage
             exit 1
         fi

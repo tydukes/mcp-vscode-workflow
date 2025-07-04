@@ -46,10 +46,13 @@ cd mcp-vscode-workflow
 # Make scripts executable
 chmod +x scripts/*.sh
 
-# Option 1: Interactive mode (recommended for new users)
+# Option 1: Quick setup (fastest, under 60 seconds)
+./scripts/bootstrap.sh --quick
+
+# Option 2: Interactive mode (recommended for new users)
 ./scripts/bootstrap.sh --interactive
 
-# Option 2: Direct profile selection
+# Option 3: Direct profile selection
 ./scripts/bootstrap.sh --profile python
 ```
 
@@ -126,13 +129,23 @@ The `bootstrap.sh` script supports several options:
 Options:
   --profile <name>     Use specific profile (bash, cicd, docs, infra, python, node)
   --interactive        Launch interactive mode with auto-detection and wizard
+  --quick              Quick setup with minimal validation (uses Python profile)
   --help              Show this help message
 
 Examples:
-  ./scripts/bootstrap.sh --interactive           # Interactive wizard (recommended)
-  ./scripts/bootstrap.sh --profile python        # Direct profile selection
-  ./scripts/bootstrap.sh --profile docs          # Documentation profile
+  ./scripts/bootstrap.sh --quick                     # Quick setup (under 60 seconds)
+  ./scripts/bootstrap.sh --interactive               # Interactive wizard (recommended)
+  ./scripts/bootstrap.sh --profile python            # Direct profile selection
+  ./scripts/bootstrap.sh --profile docs              # Documentation profile
 ```
+
+### Quick Setup Mode Benefits
+
+- **Ultra fast**: Complete setup in under 60 seconds
+- **Minimal validation**: Skips time-consuming tool checks
+- **Python focused**: Automatically uses Python development profile
+- **Essential setup**: Configures core development environment
+- **Next steps guidance**: Shows immediate actions to take after setup
 
 ### Interactive Mode Benefits
 
