@@ -52,6 +52,8 @@ jobs:
             "Makefile$"
             "\.github/workflows/.*\.yml$"
             "tests/.*\.py$"
+            "scripts/debug-.*\.sh$"
+            "scripts/check-.*\.sh$"
             "\.vscode/settings\.json$"
             "LICENSE$"
             "\.yamllint$"
