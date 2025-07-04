@@ -163,12 +163,25 @@ jobs:
 
               console.log('✅ PR approved for auto-merge');
 
-              // Enable auto-merge using GitHub's auto-merge feature
-              await github.rest.pulls.enableAutoMerge({
-                owner,
-                repo,
-                pull_number: number,
-                merge_method: 'squash'
+              // Enable auto-merge using GitHub's GraphQL API
+              const prId = context.payload.pull_request.node_id;
+              await github.graphql(`
+                mutation EnableAutoMerge($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+                  enablePullRequestAutoMerge(input: {
+                    pullRequestId: $pullRequestId
+                    mergeMethod: $mergeMethod
+                  }) {
+                    pullRequest {
+                      autoMergeRequest {
+                        enabledAt
+                        mergeMethod
+                      }
+                    }
+                  }
+                }
+              `, {
+                pullRequestId: prId,
+                mergeMethod: 'SQUASH'
               });
 
               console.log('✅ Auto-merge enabled successfully');
@@ -229,12 +242,25 @@ jobs:
                 body: '✅ Auto-approved: Dependabot patch/minor version update'
               });
 
-              // Enable auto-merge
-              await github.rest.pulls.enableAutoMerge({
-                owner,
-                repo,
-                pull_number: number,
-                merge_method: 'squash'
+              // Enable auto-merge using GitHub's GraphQL API
+              const prId = context.payload.pull_request.node_id;
+              await github.graphql(`
+                mutation EnableAutoMerge($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+                  enablePullRequestAutoMerge(input: {
+                    pullRequestId: $pullRequestId
+                    mergeMethod: $mergeMethod
+                  }) {
+                    pullRequest {
+                      autoMergeRequest {
+                        enabledAt
+                        mergeMethod
+                      }
+                    }
+                  }
+                }
+              `, {
+                pullRequestId: prId,
+                mergeMethod: 'SQUASH'
               });
 
               console.log('✅ Auto-merge enabled for dependabot PR');
