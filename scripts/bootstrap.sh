@@ -866,16 +866,25 @@ open_vscode_with_profile() {
     fi
 
     # Open VS Code in the workspace directory
-    if code "$workspace_root"; then
-        log_success "VS Code opened successfully"
-        log_info "Workspace: $workspace_root"
+    if command -v code >/dev/null 2>&1; then
+        if code "$workspace_root"; then
+            log_success "VS Code opened successfully"
+            log_info "Workspace: $workspace_root"
+            if [[ -f "$profile_config" ]]; then
+                log_info "Profile config available at: $profile_config"
+            fi
+            return 0
+        else
+            log_error "Failed to open VS Code"
+            return 1
+        fi
+    else
+        log_warn "VS Code CLI not available, skipping VS Code opening"
+        log_info "Workspace configured at: $workspace_root"
         if [[ -f "$profile_config" ]]; then
             log_info "Profile config available at: $profile_config"
         fi
         return 0
-    else
-        log_error "Failed to open VS Code"
-        return 1
     fi
 }
 
