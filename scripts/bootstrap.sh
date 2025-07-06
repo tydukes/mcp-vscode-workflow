@@ -78,6 +78,16 @@ EXAMPLES:
   $0 --dry-run            # Show what would be installed without installing
   $0 --profile python --install-deps  # Bootstrap Python with auto-installation
 
+INSTALLATION:
+  The --install-deps flag automatically installs missing tools using the appropriate
+  package manager for your operating system:
+  • macOS: Homebrew (brew)
+  • Linux: apt-get (Ubuntu), dnf (Fedora/RHEL)  
+  • Windows: winget (Windows Package Manager)
+  
+  Use --dry-run with --install-deps to preview what would be installed.
+  If automatic installation fails, manual installation commands are provided.
+
 AUTO-DETECTION:
   When no options are provided, the script will analyze your project structure
   and suggest the most appropriate profile based on detected files and patterns.

@@ -477,6 +477,16 @@ Examples:
   $0 python --install-deps  # Install missing Python tools
   $0 --dry-run python    # Show what would be installed for Python
 
+INSTALLATION:
+  The --install-deps flag automatically installs missing tools using the appropriate
+  package manager for your operating system:
+  • macOS: Homebrew (brew)
+  • Linux: apt-get (Ubuntu), dnf (Fedora/RHEL)
+  • Windows: winget (Windows Package Manager)
+  
+  Use --dry-run with --install-deps to preview installations without executing them.
+  If automatic installation fails, manual installation commands are provided.
+
 Exit codes:
   0 - All required tools are present
   1 - One or more required tools are missing
