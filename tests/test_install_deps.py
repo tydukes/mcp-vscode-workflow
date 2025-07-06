@@ -61,7 +61,7 @@ class TestInstallDeps:
 
         assert result.returncode == 0
         assert "Dry run completed successfully!" in result.stdout
-        assert "Dry run: Showing what would be installed" in result.stderr
+        assert "Dry run: Showing what would be installed" in result.stdout
 
     def test_check_tools_install_deps_help(self):
         """Test that check-tools.sh has --install-deps in help."""
