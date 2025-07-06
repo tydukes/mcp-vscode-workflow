@@ -4,6 +4,8 @@
 
 This project implements a comprehensive CI/CD pipeline using GitHub Actions and pre-commit hooks to ensure code quality, security, and reliability. The setup includes automated testing, linting, security scanning, and branch protection rules.
 
+**📋 Important**: All contributions must meet the comprehensive [acceptance criteria](acceptance-criteria.md) which define the testing, quality, and security requirements for this project.
+
 ## Components
 
 ### 1. GitHub Actions Workflows
@@ -390,11 +392,22 @@ uv pip install -e ".[dev]"
 ## Best Practices
 
 ### For Contributors
-1. Run `make dev-setup` for initial setup
-2. Use `make quick-check` before pushing
-3. Follow conventional commit format
-4. Keep PRs focused and reasonably sized
-5. Update documentation for significant changes
+1. **Review acceptance criteria first**: All contributions must meet the comprehensive [acceptance criteria](acceptance-criteria.md)
+2. Run `make ci-local` before pushing to verify all requirements
+3. Run `make dev-setup` for initial setup
+4. Use `make quick-check` for fast validation during development
+5. Follow conventional commit format
+6. Keep PRs focused and reasonably sized
+7. Update documentation for significant changes
+
+### Testing Requirements
+All contributions must pass:
+- **Python tests**: `make test` (all tests must pass)
+- **Shell validation**: `shellcheck` on all shell scripts
+- **Security scanning**: `make security` (no high-severity issues)
+- **Code formatting**: `make lint` (no violations)
+- **Configuration validation**: `make validate-configs`
+- **Pre-commit hooks**: `make run-hooks`
 
 ### For Maintainers
 1. Review auto-merge configurations regularly
