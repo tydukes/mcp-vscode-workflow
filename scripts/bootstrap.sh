@@ -56,6 +56,8 @@ OPTIONS:
   --profile <name>     Use specific profile (bash, cicd, docs, infra, python, node)
   --interactive        Launch interactive mode with auto-detection and wizard
   --quick              Quick setup with minimal validation (uses Python profile)
+  --install-deps       Automatically install missing dependencies
+  --dry-run            Show what would be installed without installing
   -h, --help           Show this help message
 
 PROFILES:
@@ -72,6 +74,9 @@ EXAMPLES:
   $0 --profile infra      # Bootstrap Infrastructure development environment
   $0 --interactive        # Launch interactive wizard with auto-detection
   $0 --quick              # Quick setup with Python profile (under 60 seconds)
+  $0 --install-deps       # Auto-install missing dependencies
+  $0 --dry-run            # Show what would be installed without installing
+  $0 --profile python --install-deps  # Bootstrap Python with auto-installation
 
 AUTO-DETECTION:
   When no options are provided, the script will analyze your project structure
@@ -762,8 +767,18 @@ check_vscode() {
 run_tool_validation() {
     local profile="$1"
     local script_dir="$2"
+    local install_deps="$3"
+    local dry_run="$4"
 
-    log_step "Validating tools for $profile profile..."
+    if [[ "$install_deps" == true ]]; then
+        if [[ "$dry_run" == true ]]; then
+            log_step "Dry run: Showing what would be installed for $profile profile..."
+        else
+            log_step "Installing missing tools for $profile profile..."
+        fi
+    else
+        log_step "Validating tools for $profile profile..."
+    fi
 
     local check_tools_script="$script_dir/check-tools.sh"
     if [[ ! -f "$check_tools_script" ]]; then
@@ -776,12 +791,34 @@ run_tool_validation() {
         chmod +x "$check_tools_script"
     fi
 
-    if "$check_tools_script" "$profile"; then
-        log_success "All required tools validated for $profile profile"
+    local check_args=("$profile")
+    if [[ "$install_deps" == true ]]; then
+        check_args+=("--install-deps")
+    fi
+    if [[ "$dry_run" == true ]]; then
+        check_args+=("--dry-run")
+    fi
+
+    if "$check_tools_script" "${check_args[@]}"; then
+        if [[ "$install_deps" == true ]]; then
+            if [[ "$dry_run" == true ]]; then
+                log_success "Dry run completed for $profile profile"
+            else
+                log_success "All required tools installed for $profile profile"
+            fi
+        else
+            log_success "All required tools validated for $profile profile"
+        fi
         return 0
     else
-        log_error "Tool validation failed for $profile profile"
-        log_error "Please install missing tools and try again"
+        if [[ "$install_deps" == true ]]; then
+            log_error "Failed to install required tools for $profile profile"
+            log_error "Some tools may require manual installation or elevated permissions"
+            log_error "Run without --install-deps to see manual installation instructions"
+        else
+            log_error "Tool validation failed for $profile profile"
+            log_error "Please install missing tools and try again"
+        fi
         return 1
     fi
 }
@@ -1009,6 +1046,8 @@ main() {
     local profile=""
     local interactive=false
     local quick=false
+    local install_deps=false
+    local dry_run=false
 
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
@@ -1023,6 +1062,14 @@ main() {
                 ;;
             --quick)
                 quick=true
+                shift
+                ;;
+            --install-deps)
+                install_deps=true
+                shift
+                ;;
+            --dry-run)
+                dry_run=true
                 shift
                 ;;
             -h|--help)
@@ -1043,6 +1090,17 @@ main() {
     local workspace_root
     # Use current directory as workspace root for auto-detection
     workspace_root=$(pwd)
+
+    # Validate flag combinations
+    if [[ "$dry_run" == true && "$install_deps" == false ]]; then
+        log_error "--dry-run can only be used with --install-deps"
+        show_usage
+        exit 1
+    fi
+
+    if [[ "$quick" == true && "$install_deps" == true ]]; then
+        log_warn "--install-deps is implied in --quick mode"
+    fi
 
     # Handle quick mode
     if [[ "$quick" == true ]]; then
@@ -1123,10 +1181,17 @@ main() {
     echo
 
     # Step 2: Validate tools for the profile
-    if ! run_tool_validation "$profile" "$script_dir"; then
+    if ! run_tool_validation "$profile" "$script_dir" "$install_deps" "$dry_run"; then
         exit 1
     fi
     echo
+
+    # If dry run, exit here
+    if [[ "$dry_run" == true ]]; then
+        log_success "Dry run completed successfully!"
+        log_info "Use --install-deps without --dry-run to actually install the tools"
+        exit 0
+    fi
 
     # Step 3: Install MCP packages
     if ! install_mcp_packages "$script_dir"; then
