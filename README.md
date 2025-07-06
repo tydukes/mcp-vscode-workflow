@@ -191,6 +191,8 @@ npx @modelcontextprotocol/server-sequential-thinking --status
 - **[AI Roles](docs/roles.md)** - Role descriptions, usage patterns, and examples
 - **[Configuration](docs/configuration.md)** - Advanced customization and settings
 - **[Getting Started](docs/getting-started.md)** - Detailed walkthrough and examples
+- **[CI/CD Setup](docs/ci-cd-setup.md)** - Continuous integration and deployment pipeline
+- **[Acceptance Criteria](docs/acceptance-criteria.md)** - Quality standards and testing requirements
 
 ## Requirements
 
