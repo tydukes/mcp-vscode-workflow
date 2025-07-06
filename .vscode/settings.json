@@ -6,5 +6,10 @@
   "workbench.panel.chatSideBar.enabled": true,
   "chat.experimental.saveSession": false,
   "chat.experimental.autoSaveSession": false,
-  "chat.experimental.createSessionSummary": false
+  "chat.experimental.createSessionSummary": false,
+  "python.testing.pytestArgs": [
+    "tests"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }
