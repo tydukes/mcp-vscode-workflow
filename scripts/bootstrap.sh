@@ -82,9 +82,9 @@ INSTALLATION:
   The --install-deps flag automatically installs missing tools using the appropriate
   package manager for your operating system:
   • macOS: Homebrew (brew)
-  • Linux: apt-get (Ubuntu), dnf (Fedora/RHEL)  
+  • Linux: apt-get (Ubuntu), dnf (Fedora/RHEL)
   • Windows: winget (Windows Package Manager)
-  
+
   Use --dry-run with --install-deps to preview what would be installed.
   If automatic installation fails, manual installation commands are provided.
 
@@ -1053,6 +1053,26 @@ show_quick_success_message() {
 
 # Main function
 main() {
+    local docker_mode=false
+    local args=()
+
+    # Parse --docker flag and remove it from args
+    for i in "$@"; do
+        if [[ "$i" == "--docker" ]]; then
+            docker_mode=true
+        else
+            args+=("$i")
+        fi
+    done
+
+    # If --docker is set and not already inside container, re-run in Docker
+    if [[ "$docker_mode" == true && -z "$IN_DOCKER" ]]; then
+        echo "[INFO] Running bootstrap.sh inside Docker container..."
+        # Use docker-compose run to start a new container, mounting the workspace
+        docker-compose run --rm -e IN_DOCKER=1 mcp ./scripts/bootstrap.sh "${args[@]}"
+        exit $?
+    fi
+
     local profile=""
     local interactive=false
     local quick=false
@@ -1062,6 +1082,10 @@ main() {
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
+            --docker)
+                # Already handled above
+                shift
+                ;;
             --profile)
                 profile="$2"
                 shift 2
