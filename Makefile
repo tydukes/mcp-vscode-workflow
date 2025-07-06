@@ -79,9 +79,9 @@ lint: ## Run all linting checks
 	@echo "3. Running isort check..."
 	@if command -v uv >/dev/null 2>&1; then uv run isort --check-only .; else isort --check-only .; fi
 	@echo "4. Running shellcheck..."
-	@find . -name "*.sh" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" -exec shellcheck {} +
+	@find . -name "*.sh" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" -not -path "./test_venv/*" -exec shellcheck {} +
 	@echo "5. Validating JSON files..."
-	@find . -name "*.json" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" -exec jq empty {} \;
+	@find . -name "*.json" -type f -not -path "./.venv/*" -not -path "./venv/*" -not -path "./virtualenv/*" -not -path "./test_venv/*" -exec jq empty {} \;
 
 format: ## Format code
 	@echo "Formatting code..."
@@ -95,7 +95,7 @@ format: ## Format code
 
 security: ## Run security checks
 	@echo "Running security checks..."
-	@if command -v uv >/dev/null 2>&1; then uv run bandit -r . -f json -o bandit-report.json; else bandit -r . -f json -o bandit-report.json; fi
+	@if command -v uv >/dev/null 2>&1; then uv run bandit -r . -x ./tests,./.venv,./venv,./test_venv,./virtualenv -f json -o bandit-report.json; else bandit -r . -x ./tests,./.venv,./venv,./test_venv,./virtualenv -f json -o bandit-report.json; fi
 	@echo "Running detect-secrets..."
 	@if command -v detect-secrets >/dev/null 2>&1; then detect-secrets scan --baseline .secrets.baseline; else echo "detect-secrets not found, skipping..."; fi
 
@@ -281,3 +281,9 @@ status: ## Show project status and configuration
 	@echo ""
 	@echo "Available scripts:"
 	@ls -1 scripts/*.sh 2>/dev/null | sed 's/^/  - /' || echo "  No scripts found"
+
+check: ## Run linting, security checks, and tests (recommended pre-commit)
+	@$(MAKE) lint
+	@$(MAKE) security
+	@$(MAKE) test
+	@echo "✅ All checks passed!"
