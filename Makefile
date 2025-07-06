@@ -16,6 +16,13 @@ help: ## Show this help message
 	@echo "  make bootstrap-docs      Bootstrap Documentation profile"
 	@echo "  make bootstrap-cicd      Bootstrap CI/CD profile"
 	@echo "  make bootstrap-bash      Bootstrap Bash/Shell profile"
+	@echo ""
+	@echo "Auto-Installation Commands:"
+	@echo "  make bootstrap-python-auto  Bootstrap Python with automatic tool installation"
+	@echo "  make bootstrap-infra-auto   Bootstrap Infrastructure with automatic tool installation"
+	@echo "  make dry-run-python         Preview Python profile installation"
+	@echo "  make dry-run-infra          Preview Infrastructure profile installation"
+	@echo "  make dry-run-all            Preview all profile installations"
 
 # Installation commands
 install: ## Install basic dependencies
@@ -131,6 +138,40 @@ bootstrap-cicd: ## Bootstrap CI/CD environment
 bootstrap-bash: ## Bootstrap Bash/Shell environment
 	@chmod +x scripts/*.sh
 	@./scripts/bootstrap.sh --profile bash
+
+# Bootstrap commands with automatic dependency installation
+bootstrap-python-auto: ## Bootstrap Python with automatic dependency installation
+	@chmod +x scripts/*.sh
+	@./scripts/bootstrap.sh --profile python --install-deps
+
+bootstrap-infra-auto: ## Bootstrap Infrastructure with automatic dependency installation
+	@chmod +x scripts/*.sh
+	@./scripts/bootstrap.sh --profile infra --install-deps
+
+bootstrap-docs-auto: ## Bootstrap Documentation with automatic dependency installation
+	@chmod +x scripts/*.sh
+	@./scripts/bootstrap.sh --profile docs --install-deps
+
+bootstrap-cicd-auto: ## Bootstrap CI/CD with automatic dependency installation
+	@chmod +x scripts/*.sh
+	@./scripts/bootstrap.sh --profile cicd --install-deps
+
+bootstrap-bash-auto: ## Bootstrap Bash/Shell with automatic dependency installation
+	@chmod +x scripts/*.sh
+	@./scripts/bootstrap.sh --profile bash --install-deps
+
+# Dry run commands to preview installations
+dry-run-python: ## Show what would be installed for Python profile
+	@chmod +x scripts/*.sh
+	@./scripts/bootstrap.sh --profile python --install-deps --dry-run
+
+dry-run-infra: ## Show what would be installed for Infrastructure profile
+	@chmod +x scripts/*.sh
+	@./scripts/bootstrap.sh --profile infra --install-deps --dry-run
+
+dry-run-all: ## Show what would be installed for all profiles
+	@chmod +x scripts/*.sh
+	@./scripts/check-tools.sh --install-deps --dry-run
 
 # Pre-commit commands
 setup-hooks: ## Install pre-commit hooks
