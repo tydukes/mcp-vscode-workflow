@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  mcp:
+    build: .
+    image: mcp-vscode-workflow:latest
+    container_name: mcp-vscode-workflow
+    volumes:
+      - .:/workspace
+      - ~/.vscode-server:/home/dev/.vscode-server
+      - ~/.config:/home/dev/.config
+    environment:
+      - PYTHONUNBUFFERED=1
+    tty: true
+    stdin_open: true
+    user: "${UID:-1000}:${GID:-1000}"
