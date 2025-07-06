@@ -3,8 +3,6 @@ Test the --install-deps and --dry-run functionality.
 """
 
 import subprocess
-import tempfile
-from pathlib import Path
 
 from tests import get_script_path
 
@@ -89,7 +87,8 @@ class TestInstallDeps:
         )
 
         assert result.returncode == 0
-        # Check output in both stderr and stdout since different messages may go to different streams
+        # Check output in both stderr and stdout since different messages
+        # may go to different streams
         output = result.stderr + result.stdout
         assert "Dry run:" in output or "Would install:" in output or "✓" in output
 
